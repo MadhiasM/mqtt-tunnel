@@ -5,13 +5,16 @@ Team: Robert, Lars, Mathias
 ## Planung
 ### Analyse
 #### Organisation
-- [ ] Rollenverteilung: Leitung, Architektur, Implementierung, Testing
+- [ ] Rollenverteilung: Leitung, Architektur, Implementierung, Testing, ...
 - [X] Kommunikationskanal: [Discord](https://discord.com/channels/@me/1424823853447905312)
-- [ ] VCS + Hosting: [GitHub](https://github.com/MadhiasM/mqtt-tunnel)
+- [x] VCS + Hosting: [GitHub](https://github.com/MadhiasM/mqtt-tunnel)
 #### Anforderungen
 - siehe [Moodle](https://moodle.fernuni-hagen.de/course/section.php?id=35887)
 
-- Tunnel sollte Protokoll verwenden, das trotz Firewalling / Proxies verfügbar ist
+- [ ] Tunnel sollte Protokoll verwenden, das trotz Firewalling / Proxies verfügbar ist
+- [ ] mindestens einen Tunnel implementieren, wie HTTP(S), optional allgemeine TCP-Verbindungen (z. B. SSH, WireGuard)
+
+- [ ] mit vorhandenen Libraries implementierbar sein, sodass der Projektrahmen nicht gesprengt wird, einfaches und effizientes Debugging möglich ist
 
 1. [ ] Erörtern Sie, welches Protokoll Ihr Trägerprotokoll wird.
 	- Broker-Basiertes Protokoll, wo es bisher noch nicht so viele Lösungen gibt:
@@ -23,15 +26,54 @@ Team: Robert, Lars, Mathias
 		- [ ] Alternativ: Nur HTTP(s) Anfragen tunneln
 		- [ ] Muss begründet werden
 3. [ ] Implementieren Sie Ihren Tunnel. Dokumentieren Sie Implementationsentscheidungen.
-	- Hinweis: Dazu sollten Sie auch die Anforderungen und Lösungsideen gründlich analysieren, der Anspruch ist, daß die Beschreibung zwar abstrakt, aber konkret genug ist, daß auf Ihr Darstellung aufbauend jemand die Implementierung erfolgreich starten kann. Der Teufel liegt bekanntlich im Detail, das vielleicht auch erst bei Tests und der Umsetzung auffällt, das müssen Sie nicht entdecken. Die Ergebnisse sollten sich in Ihrem Paper wiederfinden.	
-	
-4. Testen Sie Ihren Tunnel gründlich. Dazu gehört auch, den Tunnel mal mit tcpdump, Wireshark o.ä. aufzuzeichnen und zu prüfen, was ein Dritter sieht. 
+	- Hinweis: Dazu sollten Sie auch die Anforderungen und Lösungsideen gründlich analysieren, der Anspruch ist, daß die Beschreibung zwar abstrakt, aber konkret genug ist, daß auf Ihr Darstellung aufbauend jemand die Implementierung erfolgreich starten kann. Der Teufel liegt bekanntlich im Detail, das vielleicht auch erst bei Tests und der Umsetzung auffällt, das müssen Sie nicht entdecken. Die Ergebnisse sollten sich in Ihrem Paper wiederfinden.
 
-5. Dokumentieren Sie in Ihrer Abgabe, welche Gruppenmitglieder an welchem Teil der Aufgabe mitgewirkt haben, wer für welchen Teil "den Hut auf hatte" und welchen Anteil welches Gruppenmitglied an dem Teil hatte. Im Idealfall sollten im Ergebnis alle Gruppenmitglieder etwa gleich viel geleistet haben.
+4. [ ] Testen Sie Ihren Tunnel gründlich. Dazu gehört auch, den Tunnel mal mit tcpdump, Wireshark o.ä. aufzuzeichnen und zu prüfen, was ein Dritter sieht.
+
+5. [ ] Dokumentieren Sie in Ihrer Abgabe, welche Gruppenmitglieder an welchem Teil der Aufgabe mitgewirkt haben, wer für welchen Teil "den Hut auf hatte" und welchen Anteil welches Gruppenmitglied an dem Teil hatte. Im Idealfall sollten im Ergebnis alle Gruppenmitglieder etwa gleich viel geleistet haben.
 
 #### Trägerprotokollauswahl (Tunnel) (carrier)
 [Carrier und Passanger Protokolle](https://tsbates.com/blog/transport-vs-carrier-vs-passenger-protocols/)
+- [MQTT](https://github.com/mqtt/mqtt.org)
+  - **Quality of Service** (QoS) bietet die Möglichkeit, verschiedene Anforderungen an garantierte Zustellung zu erfüllen, je nach Bedarf
+  - **Retained Messages** bietet die Möglichkeit, die letzte Nachricht eines Topics auf dem Broker zu speichern. Dadurch erhalten neue Client direkt den letzten Status, ohne auf eine Aktualisierung warten zu müssen
+  - **Last Will Testament** bietet die Möglichkeit, Abonennten mit einer Nachricht zu informieren, wenn ein Gerät die Verbindung verliert.
+  - Implementierungsaufwand machbar für den Umfang eines Fachpraktikums: Tools/Frameworks/Libraries bereits vorhanden (Broker: Mosquitto, EMQX, NanoMQ, Cloud Based Brokers; Client-side Frameworks: Paho, FastAPI, HiveMQ, Objective-C MQTT-Client Framework; WebFrameworks: Express.js)
+  - allgemeiner Use Case: schlechte Netzwerke, instabile Verbindungen, NAT / Firewall Beschränkungen
+    - Broker stabilisiert Verbindungen (Session, Keepalive, Retain, QoS)
+    - Pub/Sub entkoppelt Sender und Empfänger
+  - kein High-Throughput, low-latency System
+  - Beliebiger Datendurchsatz möglich, da Binärdaten erlaubt sind
+  - Firewall / Proxy Toleranz
+    - Nutzt TCP:1883,manchmal geblockt
+    - MQTT over WebSockets läuft über Port 443, fast immer offen
+  - Umsetzbarkeit
+    - HTTP: einfach
+    - TCP-Streams: machbar über Topics + Sequencing
+    - SSH/WireGuard: möglich, aber nicht super effizient, für ein Praktikum aber demonstrierbar
 
+- [NATS](https://github.com/nats-io/nats-server)
+  - 40 Client language Implenmentierungen
+  - Server kann on premise, in der Cloud, auf einem Raspberry Pi oder sogar auf Edge-Geräten laufen
+  - kein QoS, aber Persistenz und Reihenfolgegarantie über JetStream (Overhead) möglich
+  - High-Throughput, low-latency
+  - weniger Dokumentation, mehr Grundlagenarbeit notwendig
+  - Firewall / Proxy Toleranz
+    - TCP:4222 → meist blockiert
+    - WebSocket-Gateway (optional): Port 443 möglich, aber weniger standardmäßig implementiert, weniger verbreitet, keine geeigneten Frameworks
+  - Signifikatester Vorteil über MQTT: Performance (Throughput/Latency) überwiegt nicht die Nachteile (Firewall Toleranz, Frameworks, Dokumentation, Implementierbarkeit)
+- CORBA
+  - Legacy Industrie-/Telekommunikations- oder Militärsysteme
+  - Technisch anspruchsvoll
+  - keine Frameworks, Setup mühsam
+- AMQP
+  - Komplexere Routing-Mechanismen
+  - Ausfallsicherheit / garantierte Zustellung durch persistente Queues und ACK-Systeme.
+  - Transaktionale Anwendungen wie Banking (Echtzeitüberweisung, Hochfrequenztrading), nicht notwendig für dieses Projekt
+  - Vorteil der nahtlosen Integration in Enterprise-Umgebungen (SAP, Oracle) über standardisierte Schnittstellen bietet in diesem Projekt keinen Mehrwert
+
+Quellen:
+https://www.newroom-media.de/blog/mqtt-coap-amqp-welches-iot-protokoll-eignet-sich-fuer-dein-projekt/
 
 #### Nutzprotokollauswahl (getunnelt) (passenger)
 
