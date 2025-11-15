@@ -45,12 +45,27 @@ Team: Robert, Lars, Mathias
   - kein High-Throughput, low-latency System
   - Beliebiger Datendurchsatz möglich, da Binärdaten erlaubt sind
   - Firewall / Proxy Toleranz
-    - Nutzt TCP:1883,manchmal geblockt
-    - MQTT over WebSockets läuft über Port 443, fast immer offen
+    - Nutzt TCP:1883/8883, oftmals geblockt
+    - MQTT over WebSockets läuft über Port 443, fast immer offen, höchste Wahrscheinlichkeit der Verfügbarkeit
   - Umsetzbarkeit
     - HTTP: einfach
     - TCP-Streams: machbar über Topics + Sequencing
     - SSH/WireGuard: möglich, aber nicht super effizient, für ein Praktikum aber demonstrierbar
+  - Use Case:
+    - Universal-Transportkanal für Geräte und Standorte, die im Internet nicht erreichbar sind — aber einen MQTT-Broker erreichen können.
+    - MQTT ist weltweit in IoT, Automatisierung, industriellen Anlagen, Logistik, Smart Home und Embedded Systemen verbreitet – oft das einzige Protokoll, das garantiert durchkommt.
+
+    - Use Case A — Fernwartung von IoT-Geräten hinter Firewalls
+      - Viele IoT-Geräte sitzen hinter strengen Unternehmens-Firewalls oder Mobilfunknetzen (NAT, CGNAT). SSH, HTTPS oder VPN funktionieren nicht.
+      - MQTT ermöglicht es, Logs zu ziehen, Diagnosen durchführen, OTA-Updates einzuspielen, da MQTT in all diesen Netzen fast immer offen ist, der MQTT-Tunnel ermöglicht „SSH durch MQTT“, also remote Zugriff ohne Port-Freigaben, ohne VPN, ohne Reverse SSH Hacks. Manche Geräte ermöglichen nur die Kommunikation über MQTT
+      - Zielkunden: Maschinenbauer, Hersteller von Embedded-Systemen, Smart-Home-Gerätehersteller, Gateway-Hersteller (LTE, 5G, NB-IoT)
+    - Use Case B — Sichere Kommunikation über Mobilfunknetze, in denen alles andere geblockt ist
+      - Viele Mobilfunkanbieter erlauben MQTT (Standard-Port 8883 / 443 via WS) und HTTP/HTTPS, aber blockieren eingehende Verbindungen, viele Ports, VPN-Protokolle (IPsec, WireGuard, OpenVPN), der MQTT-Tunnel arbeitet nur ausgehend, über eine einzige persistente Verbindung zum Broker.
+      - Zielkunden: Logistik (Truck Gateways), Energieversorger, Smart Meter Hersteller, Fahrzeuge/Flotten, Outdoor-Sensorik
+      - Use Case C — Sichere Datenübertragung in Ländern mit starkem Firewalling / Zensur
+        - In restriktiven Netzwerken (Hotel-WLAN, Firmennetze, bestimmte Länder, Flugzeuge) sind sehr viele Protokolle blockiert. MQTT-over-WebSocket-over-TLS:443 ist kaum unterscheidbar von HTTPS.
+        - Ein MQTT-Tunnel ermöglicht: VPN-ähnliche Verbindungen, HTTP-Zugriff, Dateiübertragung selbst in restriktiven Netzen.
+        - Zielkunden: NGOs, Unternehmen mit internationalen Niederlassungen, Journalistenausrüstung, Touristen
 
 - [NATS](https://github.com/nats-io/nats-server)
   - 40 Client language Implenmentierungen
