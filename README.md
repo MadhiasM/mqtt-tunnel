@@ -6,19 +6,37 @@ Team: Robert, Lars, Mathias
 ### Analyse
 #### Organisation
 - [ ] Rollenverteilung: Leitung, Architektur, Implementierung, Testing, ...
+- Zu klärende Fragen:
+  - Was brauchen wir server-/clientseitig, welche Libraries, ...
+  - welche Funktionen/Methoden/... brauchen wir - danach dann Aufteilung der Arbeitspakete 
+  - Welche MQTT Funktionen (QoS, Retained Messages, ...) wollen wir nutzen? (Latenz durch ACK, ...)
+  - Zusammenspiel TCP und MQTT
+    - Paketreihenfolge? QoS 2: https://www.echolon.de/de/blog/das-mqtt-protokoll-im-iot/ Wieso sollte das so sein? https://stackoverflow.com/questions/30955110/is-message-order-preserved-in-mqtt-messages, https://drdroid.io/stack-diagnosis/mqtt-messages-are-not-being-delivered-in-the-order-they-were-sent - möglicherweise nicht direkt in MQTT sondern in TCP? https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.pdf "The protocol runs over TCP/IP, or over other network protocols that provide ordered, lossless, bidirectional connections."
+- Server:
+  - Welcher MQTT Broker
+- Welcher Client
+
+- 25./26.11. nächstes Sync
+- 31.12. Umsetzung Tunnel, dann Testing + Dokumentation
+- 16.01. Abgabe schriftliche Ausarbeitung + Code
+- 31.01. Vortrag
+  
+
 - [X] Kommunikationskanal: [Discord](https://discord.com/channels/@me/1424823853447905312)
 - [x] VCS + Hosting: [GitHub](https://github.com/MadhiasM/mqtt-tunnel)
 #### Anforderungen
 - siehe [Moodle](https://moodle.fernuni-hagen.de/course/section.php?id=35887)
 
 - [ ] Tunnel sollte Protokoll verwenden, das trotz Firewalling / Proxies verfügbar ist
+  - Wie verbreitet ist das Protokoll?
+  - Sind die genutzten Ports in bestimmten Umgebungen freigeschaltet?
 - [ ] mindestens einen Tunnel implementieren, wie HTTP(S), optional allgemeine TCP-Verbindungen (z. B. SSH, WireGuard)
-
+  - Erster Ansatz: Allgemeiner IP (TCP/UDP) Tunnel, ermöglicht auch DNS Anfragen
 - [ ] mit vorhandenen Libraries implementierbar sein, sodass der Projektrahmen nicht gesprengt wird, einfaches und effizientes Debugging möglich ist
 
 1. [ ] Erörtern Sie, welches Protokoll Ihr Trägerprotokoll wird.
 	- Broker-Basiertes Protokoll, wo es bisher noch nicht so viele Lösungen gibt:
-		- [ ] Warum MQTT?
+		- [ ] Warum MQTT? Verbreitung, Firewallumgehung möglich, Libraries, ...
 		- [ ] Zuhilfenahme von Tools/Frameworks explizit empfohlen
 2. [ ] Erörtern Sie, ob Sie allgemein alle TCP oder UDP oder IP-Verbindungen tunneln wollen, oder nur HTTP(S).
 	- [ ] Welche Protokolle werden getunnelt?
@@ -78,6 +96,7 @@ Team: Robert, Lars, Mathias
     - WebSocket-Gateway (optional): Port 443 möglich, aber weniger standardmäßig implementiert, weniger verbreitet, keine geeigneten Frameworks
   - Signifikatester Vorteil über MQTT: Performance (Throughput/Latency) überwiegt nicht die Nachteile (Firewall Toleranz, Frameworks, Dokumentation, Implementierbarkeit)
 - CORBA
+  - Verbreitung nicht mit MQTT vergleichbar, daher nicht so gut zur Firewallumgehung geeignet
   - Legacy Industrie-/Telekommunikations- oder Militärsysteme
   - Technisch anspruchsvoll
   - keine Frameworks, Setup mühsam
@@ -91,10 +110,12 @@ Quellen:
 https://www.newroom-media.de/blog/mqtt-coap-amqp-welches-iot-protokoll-eignet-sich-fuer-dein-projekt/
 
 #### Nutzprotokollauswahl (getunnelt) (passenger)
-
+- TCP Pakete sind kleiner als max. MQTT Message Größe, daher keine erneute Aufteilung nötig
+- 
 
 ### Architektur & Design
-
+- MQTT Pakete mithilfe der bestehenden Libraries hin und her schicken
+- Dann an TUN Devices weitergeben
 ### Implementierung
 
 ### Test & Validierung
