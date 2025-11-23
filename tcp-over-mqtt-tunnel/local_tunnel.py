@@ -2,10 +2,10 @@ import socket
 import paho.mqtt.client as mqtt
 
 # KONFIGURATION
-BROKER_IP = "192.168.178.21" # IP Ihres Brokers
-LOCAL_LISTEN_PORT = 2222    # SSH Verbindung wird über diesen Port geforwarded: ssh -p 2222 user@localhost
-TOPIC_UP = "tunnel/c2s"     # Local -> Remote
-TOPIC_DOWN = "tunnel/s2c"   # Remote -> Local
+BROKER_IP = "192.168.178.21" # Broker IP
+LOCAL_LISTEN_PORT = 2222     # SSH Verbindung wird über diesen Port geforwarded: ssh -p 2222 user@localhost
+TOPIC_UP = "tunnel/c2s"      # Local -> Remote
+TOPIC_DOWN = "tunnel/s2c"    # Remote -> Local
 
 active_socket = None
 
