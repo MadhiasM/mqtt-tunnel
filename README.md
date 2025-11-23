@@ -1,35 +1,37 @@
 # mqtt-tunnel
 
 Team: Robert, Lars, Mathias
-
 ## Planung
-### Analyse
-#### Organisation
-- [ ] Rollenverteilung: Leitung, Architektur, Implementierung, Testing, ...
-- Zu klärende Fragen:
-  - Was brauchen wir server-/clientseitig, welche Libraries, ...
-  - welche Funktionen/Methoden/... brauchen wir - danach dann Aufteilung der Arbeitspakete 
-  - Welche MQTT Funktionen (QoS, Retained Messages, ...) wollen wir nutzen? (Latenz durch ACK, ...)
-  - Zusammenspiel TCP und MQTT
-    - Paketreihenfolge? QoS 2: https://www.echolon.de/de/blog/das-mqtt-protokoll-im-iot/ Wieso sollte das so sein? https://stackoverflow.com/questions/30955110/is-message-order-preserved-in-mqtt-messages, https://drdroid.io/stack-diagnosis/mqtt-messages-are-not-being-delivered-in-the-order-they-were-sent - möglicherweise nicht direkt in MQTT sondern in TCP? https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.pdf "The protocol runs over TCP/IP, or over other network protocols that provide ordered, lossless, bidirectional connections."
-- Server:
-  - Welcher MQTT Broker
-- Welcher Client
-
-- 25./26.11. nächstes Sync
-- 31.12. Umsetzung Tunnel, dann Testing + Dokumentation
-- 16.01. Abgabe schriftliche Ausarbeitung + Code
-- 31.01. Vortrag
-  
-
+### Organisation
+- [ ] Rollenverteilung: Arbeitspakete, Architektur, Implementierung, Testing, ...
 - [X] Kommunikationskanal: [Discord](https://discord.com/channels/@me/1424823853447905312)
 - [x] VCS + Hosting: [GitHub](https://github.com/MadhiasM/mqtt-tunnel)
-#### Anforderungen
+
+- 25./26.11. nächster Sync
+- 31.12. Umsetzung Tunnel, dann Testing + Dokumentation bis zur Abgabe
+- 16.01. Abgabe schriftliche Ausarbeitung + Code
+- 31.01. Vortrag^
+### offene Fragen
+  - **MQTT**:
+    - [ ] Server/**Broker**: Mosquitto? 
+    - [ ] **Client**: Paho (Python, Go, C), rumqtt (Rust), HiveMQ (Java), FastAPI? (Python), MQTT-C (C)
+  - Funktionen/Methoden/... brauchen wir - danach dann Aufteilung der Arbeitspakete 
+  - Welche **MQTT Features** (QoS, Retained Messages, ...) wollen wir nutzen? (Latenz durch ACK, ...)
+  - Zusammenspiel TCP und MQTT: Sequencing/Paketreihenfolge? Eigene Implementierung notwendig?
+    - https://www.hivemq.com/blog/understanding-mqtt-message-ordering/ "MQTT 3.1.1 guarantees that for a single connection, the broker will deliver messages in the order they are received for each subscribed topic, respecting the QoS level: "A Server MUST by default treat each Topic as an ”Ordered Topic”. [...] However, this does not apply across different topics or different connections. [...] If both Client and Server make sure that no more than one message is “in-flight” at any one time (by not sending a message until its predecessor has been acknowledged), then no QoS 1 message will be received after any later one. For example, a subscriber might receive them in the order 1,2,3,3,4 but not 1,2,3,2,3,4. Setting an in-flight window of 1 also means that order will be preserved even if the publisher sends a sequence of messages with different MQTT QoS levels on the same topic.”"
+    - https://www.echolon.de/de/blog/das-mqtt-protokoll-im-iot/ QoS 2 Wieso sollte das so sein? "QoS 2 stellt sicher, dass die Nachrichten genau einmal und in der richtigen Reihenfolge übertragen werden, erfordert jedoch mehr Bandbreite und Rechenleistung." Begründung?
+    - https://stackoverflow.com/questions/30955110/is-message-order-preserved-in-mqtt-messages
+    - https://drdroid.io/stack-diagnosis/mqtt-messages-are-not-being-delivered-in-the-order-they-were-sent - möglicherweise nicht direkt in MQTT sondern in TCP? 
+    - https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.pdf "The protocol runs over TCP/IP, or over other network protocols that provide ordered, lossless, bidirectional connections."
+- **TCP Meltdown** (TCP over TCP): MQTT nutzt TCP, tunnelt aber in der Payload nochmals TCP; potentielles Risiko und Performancekiller [Link1](https://openvpn.net/as-docs/faq-tcp-meltdown.html), [Link2](https://www.youtube.com/watch?v=AAssk2N_oPk), [Link3](https://serverfault.com/questions/1045786/what-is-tcp-over-tcp-and-how-does-openvpn-under-tcp-mode-avoid-the-issue)
+  - **getunneltes** Protokoll: TCP, UDP, IP, HTTP(S)? 
+## Analyse
+### Anforderungen
 - siehe [Moodle](https://moodle.fernuni-hagen.de/course/section.php?id=35887)
 
 - [ ] Tunnel sollte Protokoll verwenden, das trotz Firewalling / Proxies verfügbar ist
-  - Wie verbreitet ist das Protokoll?
-  - Sind die genutzten Ports in bestimmten Umgebungen freigeschaltet?
+  - Wie verbreitet ist das Protokoll? MQTT.
+  - Sind die genutzten Ports in bestimmten Umgebungen freigeschaltet? MQTT.
 - [ ] mindestens einen Tunnel implementieren, wie HTTP(S), optional allgemeine TCP-Verbindungen (z. B. SSH, WireGuard)
   - Erster Ansatz: Allgemeiner IP (TCP/UDP) Tunnel, ermöglicht auch DNS Anfragen
 - [ ] mit vorhandenen Libraries implementierbar sein, sodass der Projektrahmen nicht gesprengt wird, einfaches und effizientes Debugging möglich ist
@@ -49,8 +51,7 @@ Team: Robert, Lars, Mathias
 4. [ ] Testen Sie Ihren Tunnel gründlich. Dazu gehört auch, den Tunnel mal mit tcpdump, Wireshark o.ä. aufzuzeichnen und zu prüfen, was ein Dritter sieht.
 
 5. [ ] Dokumentieren Sie in Ihrer Abgabe, welche Gruppenmitglieder an welchem Teil der Aufgabe mitgewirkt haben, wer für welchen Teil "den Hut auf hatte" und welchen Anteil welches Gruppenmitglied an dem Teil hatte. Im Idealfall sollten im Ergebnis alle Gruppenmitglieder etwa gleich viel geleistet haben.
-
-#### Trägerprotokollauswahl (Tunnel) (carrier)
+### Trägerprotokollauswahl (Tunnel/carrier)
 [Carrier und Passanger Protokolle](https://tsbates.com/blog/transport-vs-carrier-vs-passenger-protocols/)
 - [MQTT](https://github.com/mqtt/mqtt.org)
   - **Quality of Service** (QoS) bietet die Möglichkeit, verschiedene Anforderungen an garantierte Zustellung zu erfüllen, je nach Bedarf
@@ -69,21 +70,9 @@ Team: Robert, Lars, Mathias
     - HTTP: einfach
     - TCP-Streams: machbar über Topics + Sequencing
     - SSH/WireGuard: möglich, aber nicht super effizient, für ein Praktikum aber demonstrierbar
-  - potentielle Use Cases:
-    - Universaler Transportkanal für Geräte und Standorte, die im Internet nicht erreichbar sind — aber einen MQTT-Broker erreichen können.
+  - potentieller Use Case:
+    - Universaler Transportkanal für Geräte und Standorte, die im Internet nicht erreichbar sind, aber einen MQTT-Broker erreichen können.
     - MQTT ist weltweit in IoT, Automatisierung, industriellen Anlagen, Logistik, Smart Home und Embedded Systemen verbreitet, in bestimmten Umfeldern eines der wenigen Protokolle, das nicht blockiert wird.
-
-    - Use Case A — Fernwartung von IoT-Geräten hinter Firewalls
-      - Viele IoT-Geräte sitzen hinter strengen Unternehmens-Firewalls oder Mobilfunknetzen (NAT, CGNAT). SSH, HTTPS oder VPN funktionieren nicht.
-      - MQTT ermöglicht es, Logs zu ziehen, Diagnosen durchführen, OTA-Updates einzuspielen, da MQTT in all diesen Netzen fast immer offen ist, der MQTT-Tunnel ermöglicht „SSH durch MQTT“, also remote Zugriff ohne Port-Freigaben, ohne VPN, ohne Reverse SSH Hacks. Manche Geräte ermöglichen nur die Kommunikation über MQTT
-      - Zielkunden: Maschinenbauer, Hersteller von Embedded-Systemen, Smart-Home-Gerätehersteller, Gateway-Hersteller (LTE, 5G, NB-IoT)
-    - Use Case B — Sichere Kommunikation über Mobilfunknetze, in denen alles andere geblockt ist
-      - Einige Mobilfunkanbieter erlauben MQTT (Standard-Port 8883 / 443 via WS) und HTTP/HTTPS, aber blockieren eingehende Verbindungen, viele Ports, VPN-Protokolle (IPsec, WireGuard, OpenVPN), der MQTT-Tunnel arbeitet nur ausgehend, über eine einzige persistente Verbindung zum Broker.
-      - Zielkunden: Logistik (Truck Gateways), Energieversorger, Smart Meter Hersteller, Fahrzeuge/Flotten, Outdoor-Sensorik
-    - Use Case C — Sichere Datenübertragung in Ländern mit starkem Firewalling / Zensur
-      - In restriktiven Netzwerken (Hotel-WLAN, Firmennetze, bestimmte Länder, Flugzeuge) sind sehr viele Protokolle blockiert. MQTT-over-WebSocket-over-TLS:443 ist kaum unterscheidbar von HTTPS.
-      - Ein MQTT-Tunnel ermöglicht: VPN-ähnliche Verbindungen, HTTP-Zugriff, Dateiübertragung selbst in restriktiven Netzen.
-      - Zielkunden: NGOs, Unternehmen mit internationalen Niederlassungen, Journalistenausrüstung, Touristen
 
 - [NATS](https://github.com/nats-io/nats-server)
   - 40 Client language Implenmentierungen
@@ -108,16 +97,15 @@ Team: Robert, Lars, Mathias
 
 Quellen:
 https://www.newroom-media.de/blog/mqtt-coap-amqp-welches-iot-protokoll-eignet-sich-fuer-dein-projekt/
-
-#### Nutzprotokollauswahl (getunnelt) (passenger)
+### Nutzprotokollauswahl (getunnelt/passenger)
 - TCP Pakete sind kleiner als max. MQTT Message Größe, daher keine erneute Aufteilung nötig
-- 
 
-### Architektur & Design
+## Architektur & Design
 - MQTT Pakete mithilfe der bestehenden Libraries hin und her schicken
 - Dann an TUN Devices weitergeben
-### Implementierung
 
-### Test & Validierung
+## Implementierung
 
-### Dokumentation
+## Test & Validierung
+
+## Dokumentation & Präsentation
