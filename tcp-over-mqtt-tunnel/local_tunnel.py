@@ -1,8 +1,17 @@
+import json
 import socket
 import paho.mqtt.client as mqtt
 
 # KONFIGURATION
-BROKER_IP = "192.168.178.21" # Broker IP
+with open("config.json") as f:
+    conf = json.load(f)
+
+BROKER_HOST = conf["broker_host"]
+BROKER_PORT = 8883 # 1883 unencrypted or 8883 for TLS
+USERNAME = conf["username"]
+PASSWORD = conf["password"]
+CA_PATH = conf["ca_path"]
+
 LOCAL_LISTEN_PORT = 2222     # SSH Verbindung wird über diesen Port geforwarded: ssh -p 2222 user@localhost
 TOPIC_UP = "tunnel/c2s"      # Local -> Remote
 TOPIC_DOWN = "tunnel/s2c"    # Remote -> Local
@@ -27,9 +36,15 @@ def on_message(client, userdata, msg):
 
 # MQTT Setup
 mqtt_client = mqtt.Client()
+mqtt_client.username_pw_set(USERNAME, PASSWORD)
+mqtt_client.tls_set(
+    ca_certs=CA_PATH,      # <-- Path zu deiner CA
+    certfile=None,
+    keyfile=None
+)
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
-mqtt_client.connect(BROKER_IP, 1883, 60) # Verbindung mit Broker über Standard-MQTT Port 1883 mit Keepalive Time von 60 Sekunden
+mqtt_client.connect(BROKER_HOST, BROKER_PORT, 60) # Verbindung mit Broker über MQTT Port 1883 oder 8883 mit Keepalive Time
 mqtt_client.loop_start() # Hintergrund-Thread für MQTT, daher kein separates Threading notwendig und recv kann blockierend aufgerufen werden
 
 # TCP Server Setup
@@ -46,7 +61,7 @@ try:
         active_socket = client_sock # Speicher Verbindung global, sodass über on_message Daten über diese Verbindung geschickt werden können
 
         while True:
-            data = client_sock.recv(4096) # Daten der eigenen Anwendung (z.B. SSH Client) lesen, 4096 Bytes als (gewöhnliche) Buffer-Größe, außreichend für viele Anwendungen (z.B. SSH)
+            data = client_sock.recv(4096) # Daten der eigenen Anwendung (z.B. SSH Client) lesen, 4096 Bytes als (gewöhnliche) Buffer-Größe, sollte für SSH ausreichen
             if not data:
                 break
             mqtt_client.publish(TOPIC_UP, data) # In MQTT verpacken und senden

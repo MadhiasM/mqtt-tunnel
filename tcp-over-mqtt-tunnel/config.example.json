@@ -1,0 +1,7 @@
+{
+    "broker_host": "mydomain.net",
+    "username": "",
+    "password": "",
+    "ca_path": "./path/to/ca.crt",
+}
+

@@ -1,9 +1,18 @@
+import json
 import socket
 import paho.mqtt.client as mqtt
 import threading
 
 # KONFIGURATION
-BROKER_IP = "192.168.178.21" # Broker IP
+with open("config.json") as f:
+    conf = json.load(f)
+
+BROKER_HOST = conf["broker_host"]
+BROKER_PORT = 8883 # 1883 unencrypted or 8883 for TLS
+USERNAME = conf["username"]
+PASSWORD = conf["password"]
+CA_PATH = conf["ca_path"]
+
 TARGET_HOST = "localhost"    # Ziel des Traffics
 TARGET_PORT = 22             # Port des Zieldienstes (z.B. 22 für SSH, 80 für HTTP)
 TOPIC_UP = "tunnel/c2s"      # Local -> Remote
@@ -58,9 +67,15 @@ def on_message(client, userdata, msg):
 
 # MQTT Setup
 mqtt_client = mqtt.Client()
+mqtt_client.username_pw_set(USERNAME, PASSWORD)
+mqtt_client.tls_set(
+    ca_certs=CA_PATH,      # <-- Path zu deiner CA
+    certfile=None,
+    keyfile=None
+)
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
-mqtt_client.connect(BROKER_IP, 1883, 60)
+mqtt_client.connect(BROKER_HOST, BROKER_PORT, 60)
 
 print(f"Remote: Tunnel-Exit bereit. Leite weiter an {TARGET_HOST}:{TARGET_PORT}")
 mqtt_client.loop_forever()
