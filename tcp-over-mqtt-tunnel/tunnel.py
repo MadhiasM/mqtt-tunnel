@@ -7,7 +7,7 @@ import paho.mqtt.client as mqtt
 # MQTT Configuration (defaults)
 _TOPIC_UP = "tunnel/c2s"     # Local -> Remote
 _TOPIC_DOWN = "tunnel/s2c"   # Remote -> Local
-_BUFFER_SIZE = 4096
+_BUFFER_SIZE = 65536 # 65536 works more stable for following use cases: sftp, SOCKS Proxy
 _KEEPALIVE = 60
 
 # CLI overrides with help (parsed on import; tolerant of extra args)
