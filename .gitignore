@@ -1,3 +1,4 @@
-config.json
 certs/
-
+config.json
+config.wan.json
+config.lan.json

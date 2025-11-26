@@ -1,7 +1,7 @@
 {
-    "broker_host": "mydomain.net",
-    "username": "",
-    "password": "",
-    "ca_path": "./path/to/ca.crt",
+  "connection_type": "wan",
+  "broker_host": "mydomain.net",
+  "username": "myuser",
+  "password": "myPW",
+  "ca_path": "./path/to/ca.crt"
 }
-
