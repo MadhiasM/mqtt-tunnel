@@ -13,10 +13,10 @@ Team: Robert, Lars, Mathias
 - 31.01. Vortrag^
 ### offene Fragen
   - **MQTT**:
-    - [ ] Server/**Broker**: Mosquitto? 
-    - [ ] **Client**: Paho (Python, Go, C), rumqtt (Rust), HiveMQ (Java), FastAPI? (Python), MQTT-C (C)
-  - Funktionen/Methoden/... brauchen wir - danach dann Aufteilung der Arbeitspakete 
-  - Welche **MQTT Features** (QoS, Retained Messages, ...) wollen wir nutzen? (Latenz durch ACK, ...)
+    - [x] Server/**Broker**: Mosquitto 
+    - [x] **Client**: Paho (Python)
+  - [ ] Funktionen/Methoden/... brauchen wir - danach dann Aufteilung der Arbeitspakete 
+  - [ ] Welche **MQTT Features** (QoS, Retained Messages, ...) wollen wir nutzen? (Latenz durch ACK, ...)
   - Zusammenspiel TCP und MQTT: Sequencing/Paketreihenfolge? Eigene Implementierung notwendig?
     - https://www.hivemq.com/blog/understanding-mqtt-message-ordering/ "MQTT 3.1.1 guarantees that for a single connection, the broker will deliver messages in the order they are received for each subscribed topic, respecting the QoS level: "A Server MUST by default treat each Topic as an ”Ordered Topic”. [...] However, this does not apply across different topics or different connections. [...] If both Client and Server make sure that no more than one message is “in-flight” at any one time (by not sending a message until its predecessor has been acknowledged), then no QoS 1 message will be received after any later one. For example, a subscriber might receive them in the order 1,2,3,3,4 but not 1,2,3,2,3,4. Setting an in-flight window of 1 also means that order will be preserved even if the publisher sends a sequence of messages with different MQTT QoS levels on the same topic.”"
     - https://www.echolon.de/de/blog/das-mqtt-protokoll-im-iot/ QoS 2 Wieso sollte das so sein? "QoS 2 stellt sicher, dass die Nachrichten genau einmal und in der richtigen Reihenfolge übertragen werden, erfordert jedoch mehr Bandbreite und Rechenleistung." Begründung?
@@ -29,7 +29,7 @@ Team: Robert, Lars, Mathias
 ### Anforderungen
 - siehe [Moodle](https://moodle.fernuni-hagen.de/course/section.php?id=35887)
 
-- [ ] Tunnel sollte Protokoll verwenden, das trotz Firewalling / Proxies verfügbar ist
+- [x] Tunnel sollte Protokoll verwenden, das trotz Firewalling / Proxies verfügbar ist
   - Wie verbreitet ist das Protokoll? MQTT.
   - Sind die genutzten Ports in bestimmten Umgebungen freigeschaltet? MQTT.
 - [ ] mindestens einen Tunnel implementieren, wie HTTP(S), optional allgemeine TCP-Verbindungen (z. B. SSH, WireGuard)
