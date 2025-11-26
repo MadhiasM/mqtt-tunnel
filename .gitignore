@@ -2,3 +2,4 @@ certs/
 config.json
 config.wan.json
 config.lan.json
+__pycache__
