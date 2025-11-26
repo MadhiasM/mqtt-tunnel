@@ -7,11 +7,26 @@ import threading
 with open("config.json") as f:
     conf = json.load(f)
 
+MODE = conf.get("connection_type", "wan")  # sichere Option als default
+
 BROKER_HOST = conf["broker_host"]
-BROKER_PORT = 8883 # 1883 unencrypted or 8883 for TLS
 USERNAME = conf["username"]
 PASSWORD = conf["password"]
 CA_PATH = conf["ca_path"]
+
+# local access without TLS and Password Authentication via Port 1883
+if MODE == "lan":
+    BROKER_PORT = 1883
+    USE_TLS = False
+    USE_AUTH = False
+# remote access with TLS and Password Authentication via Port 8883
+elif MODE == "wan":
+    BROKER_PORT = 8883
+    USE_TLS = True
+    USE_AUTH = True
+
+else:
+    raise ValueError(f"Invalid connection_type: {MODE}")
 
 TARGET_HOST = "localhost"    # Ziel des Traffics
 TARGET_PORT = 22             # Port des Zieldienstes (z.B. 22 für SSH, 80 für HTTP)
@@ -67,12 +82,14 @@ def on_message(client, userdata, msg):
 
 # MQTT Setup
 mqtt_client = mqtt.Client()
-mqtt_client.username_pw_set(USERNAME, PASSWORD)
-mqtt_client.tls_set(
-    ca_certs=CA_PATH,      # <-- Path zu deiner CA
-    certfile=None,
-    keyfile=None
-)
+if USE_AUTH:
+    mqtt_client.username_pw_set(USERNAME, PASSWORD)
+if USE_TLS:
+    mqtt_client.tls_set(
+        ca_certs=CA_PATH,
+        certfile=None,
+        keyfile=None
+    )
 mqtt_client.on_connect = on_connect
 mqtt_client.on_message = on_message
 mqtt_client.connect(BROKER_HOST, BROKER_PORT, 60)
