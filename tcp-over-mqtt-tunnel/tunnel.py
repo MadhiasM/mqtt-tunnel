@@ -1,13 +1,57 @@
 import json
 import socket
 import threading
+import argparse
 import paho.mqtt.client as mqtt
 
-# MQTT Configuration
+# MQTT Configuration (defaults)
 _TOPIC_UP = "tunnel/c2s"     # Local -> Remote
 _TOPIC_DOWN = "tunnel/s2c"   # Remote -> Local
 _BUFFER_SIZE = 4096
 _KEEPALIVE = 60
+
+# CLI overrides with help (parsed on import; tolerant of extra args)
+_CLI_LISTEN_PORT = None
+_CLI_TARGET_PORT = None
+try:
+    _parser = argparse.ArgumentParser(
+        description=(
+            "TCP-over-MQTT Tunnel\n"
+            "- Run local_tunnel.py on the client side (listens locally and publishes to MQTT).\n"
+            "- Run remote_tunnel.py on the server side (subscribes and forwards to the target service).\n\n"
+            "Use the flags below to override runtime parameters."
+        ),
+        epilog=(
+            "Examples:\n"
+            "  python local_tunnel.py --listen-port 2022 --buffer-size 8192\n"
+            "  python remote_tunnel.py --target-port 2222 --keepalive 120\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        add_help=True,
+    )
+    _parser.add_argument("--buffer-size", type=int, dest="buffer_size",
+                         help="TCP read buffer size in bytes (default: 4096)")
+    _parser.add_argument("--keepalive", type=int, dest="keepalive",
+                         help="MQTT keepalive time in seconds (default: 60)")
+    _parser.add_argument("--listen-port", type=int, dest="listen_port",
+                         help="Local tunnel listen port (local_tunnel.py only; default: 2222)")
+    _parser.add_argument("--target-port", type=int, dest="target_port",
+                         help="Target service port (remote_tunnel.py only; default: 22)")
+
+    _args, _ = _parser.parse_known_args()
+
+    if _args.buffer_size is not None:
+        _BUFFER_SIZE = _args.buffer_size
+    if _args.keepalive is not None:
+        _KEEPALIVE = _args.keepalive
+    _CLI_LISTEN_PORT = _args.listen_port
+    _CLI_TARGET_PORT = _args.target_port
+except SystemExit:
+    # argparse -h/--help triggers SystemExit after printing help; let it bubble up
+    raise
+except Exception:
+    # Leave defaults if parsing fails for any other reason
+    pass
 
 
 # Helpers
@@ -94,7 +138,8 @@ class LocalTunnel(BaseTunnel):
 
     def __init__(self, listen_port=2222):
         super().__init__(label="Lokal")
-        self.listen_port = listen_port
+        # CLI flag takes precedence over constructor/default
+        self.listen_port = _CLI_LISTEN_PORT or listen_port
         self.active_socket = None
 
     def on_message(self, client, userdata, msg):
@@ -148,7 +193,8 @@ class RemoteTunnel(BaseTunnel):
     def __init__(self, target_host="localhost", target_port=22):
         super().__init__(label="Remote")
         self.target_host = target_host
-        self.target_port = target_port
+        # CLI flag takes precedence over constructor/default
+        self.target_port = _CLI_TARGET_PORT or target_port
         self.target_socket = None
 
     def _handle_target_responses(self, sock):
