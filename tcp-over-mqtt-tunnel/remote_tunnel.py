@@ -1,5 +1,5 @@
 from tunnel import RemoteTunnel
 
 if __name__ == "__main__":
-    # TODO: move into config.json if you vary it often.
+    # Port can be overruled via CLI argument 
     RemoteTunnel(target_host="localhost", target_port=22).run()
