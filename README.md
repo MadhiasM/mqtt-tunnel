@@ -11,17 +11,17 @@
 ___
 ## Next Steps (Ziel: 1 Woche)
 
-**Mathias**
-- [ ] Übrige Einsendeaufgaben durch den MQTT Tunnel (SOCKS) jagen.
-- [ ] **TUN** VPN (IP-Tunnel) direkt implementieren (SSH-Layer entfernen).
-- [ ] Instabile Verbindungen simulieren (Mobile Daten).
-- [ ] Buffer Size massiv hochdrehen.
-**Robert**
-- [ ] Latenzanalyse durchführen (Einfluss von Packet/Message/Buffer Size Limits).
-**Lars**
-- [ ] Analyse von `max_inflight_bytes` / `messages` und QoS-Settings auf den Durchsatz.
-**Gemeinsam**
-- [ ] Dokumentation der Implementierungsentscheidungen für das Paper fortführen.
+- **Mathias**
+	- [ ] Übrige Einsendeaufgaben durch den MQTT Tunnel (SOCKS) jagen.
+	- [ ] **TUN** VPN (IP-Tunnel) direkt implementieren (SSH-Layer entfernen).
+	- [ ] Instabile Verbindungen simulieren (Mobile Daten).
+	- [ ] Buffer Size massiv hochdrehen.
+- **Robert**
+	- [ ] Latenzanalyse durchführen (Einfluss von Packet/Message/Buffer Size Limits).
+- **Lars**
+	- [ ] Analyse von `max_inflight_bytes` / `messages` und QoS-Settings auf den Durchsatz.
+- **Gemeinsam**
+	- [ ] Dokumentation der Implementierungsentscheidungen für das Paper fortführen.
 ___
 ___
 ## Anforderungen
