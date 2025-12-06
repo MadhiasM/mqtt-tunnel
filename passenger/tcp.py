@@ -21,7 +21,8 @@ from typing import Optional
 class TcpPassengerConfig:
     port: int
     role: str
-    host: Optional[str] = 'localhost'
+    buffer_size: int = 65536
+    host: str = 'localhost'
 
 class TcpPassenger(BasePassenger):
     def __init__(self, carrier: BaseCarrier, config: TcpPassengerConfig):
@@ -151,7 +152,7 @@ class TcpPassenger(BasePassenger):
         try:
             while self.running and self.data_socket:
                 # TODO: Factor out the buffer size as (config) parameter
-                data = self.data_socket.recv(65536)
+                data = self.data_socket.recv(self.cfg.buffer_size)
                 if not data:
                     break # Connection closed by peer.
 
