@@ -1,0 +1,7 @@
+{
+  "connection_type": "wan",
+  "broker_host": "mydomain.net",
+  "username": "myuser",
+  "password": "myPW",
+  "ca_path": "./path/to/ca.crt"
+}
