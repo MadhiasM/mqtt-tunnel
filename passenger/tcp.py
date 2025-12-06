@@ -3,7 +3,6 @@ import threading
 from dataclasses import dataclass
 from .base_passenger import BasePassenger
 from carrier.base_carrier import BaseCarrier
-from typing import Optional
 
 # TODO: Check if I need threading / async here.
 # TODO: Regarding Carrier:
@@ -21,7 +20,7 @@ from typing import Optional
 class TcpPassengerConfig:
     port: int
     role: str
-    buffer_size: int = 65536
+    buffer_size: int = 1400
     host: str = 'localhost'
 
 class TcpPassenger(BasePassenger):

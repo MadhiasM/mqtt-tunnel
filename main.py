@@ -34,6 +34,7 @@ def parse_args():
 
     # TCP Config
     parser.add_argument("--tcp-port", type=int, required=True, help="Local TCP Listen Port")
+    parser.add_argument("--tcp-buffer-size", type=int, help="Buffer size of the TCP socket")
 
     return parser.parse_args()
 
