@@ -10,6 +10,9 @@
 # TODO: Consider handling of MTU, retransmission, sequencing, fragmentation/re-assembly through means of message headers/IDs handling within some separate module (framing?), maybe add some core/ directory for that
 # TODO: Check if the handling of how the role is handed over to the passenger and carrier can be improved
 # TODO: Include config.json, if not already done
+# TODO: Bootstrap mechanism, that will automatically launch the remote side, if client connects to broker. If remote is running on broker, then maybe it can be handled there
+#       TODO: Maybe some callback (on_connect - run the remote tunnel). Using this, there is no need to manually start the remote side.
+#       TODO: It would be good to automatically map the ports in some way (2222 to 22 etc.), sync the buffer size etc., so the configuration on local and remote tunnel side are equal
 
 import argparse
 import logging

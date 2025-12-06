@@ -16,6 +16,7 @@ ___
 	- [ ] **TUN** VPN (IP-Tunnel) direkt implementieren (SSH-Layer entfernen).
 	- [ ] Instabile Verbindungen simulieren (Mobile Daten).
 	- [ ] Buffer Size massiv hochdrehen.
+	- [ ] README.md für die Nutzung erstellen. z.B. für SSH: "python3 main.py --role remote --mqtt-host 192.168.178.23 --mqtt-port 1883 --tcp-port 22", "python3 main.py --role local --mqtt-host 192.168.178.23 --mqtt-port 1883 --tcp-port 2222", "ssh -p 2222 localhost"
 - **Robert**
 	- [ ] Latenzanalyse durchführen (Einfluss von Packet/Message/Buffer Size Limits).
 - **Lars**
