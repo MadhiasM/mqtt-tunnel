@@ -24,6 +24,7 @@ from .base_carrier import BaseCarrier
 #       class RemoteRole:
 #           topic_pub = "tunnel/s2c"
 #           topic_sub = "tunnel/c2s"
+# TODO: Use logging instead of print
 
 @dataclass
 class MqttConfig:
@@ -89,8 +90,6 @@ class MqttCarrier(BaseCarrier):
                 certfile=self.cfg.certfile,
                 keyfile=self.cfg.keyfile,
             )
-
-        print(f"[MQTT] Connecting to {self.cfg.host}...")
 
     # TODO: Do I really need a setter function for that?
     def set_callback(self, callback_function):
