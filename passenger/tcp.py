@@ -3,7 +3,7 @@ import threading
 from dataclasses import dataclass
 from .base_passenger import BasePassenger
 from carrier.base_carrier import BaseCarrier # TODO: Really needed?
-from typing import Optional, Callable
+from typing import Optional
 
 # TODO: Check if I need threading / async here.
 # TODO: Check if Carrier should be imported here or only in main to remove dependency / coupling
@@ -46,12 +46,13 @@ class TcpPassenger(BasePassenger):
         self.carrier.start()
 
         # TODO: Check if this if / else can be factored out, since the method is similar
+        # TODO: Check if both nead a thread here
         if self.cfg.role == 'local':
-            # Server startet in eigenem Thread, damit er accept() loopen kann
+            # Server starts in own thread, to loop while until connection is coming and accepted
             threading.Thread(target=self._run_server, daemon=True).start()
 
         elif self.cfg.role == 'remote':
-            # Client versucht direkt zu verbinden
+            # Client immediately connects
             threading.Thread(target=self._run_client, daemon=True).start()
 
     def stop(self):
@@ -80,17 +81,10 @@ class TcpPassenger(BasePassenger):
         try:
             self.start()
 
-            # WICHTIG: Haupt-Thread blockieren, um die Daemon-Threads am Leben zu halten.
-            # Da wir keine spezifische Aktion haben, die blockiert (wie socket.accept()),
-            # verwenden wir hier eine einfache Abfrage.
-            # Die elegante Lösung, die keine CPU verschwendet, basiert auf dem
-            # einfachen Warten auf den KeyboardInterrupt des Benutzers.
-
             print("[TCP] Program running. Press Ctrl+C to stop.")
 
-            # Dies blockiert den Haupt-Thread auf unbestimmte Zeit,
-            # bis eine Unterbrechung (KeyboardInterrupt) erkannt wird.
-            # Es verbraucht extrem wenig CPU, da es keine aktive Schleife ist.
+            # Block the main thread until KeyboardInterrupt (not busy)
+            # TODO: Check if old implementation is better
             threading.Event().wait()
 
         except KeyboardInterrupt:
@@ -115,16 +109,17 @@ class TcpPassenger(BasePassenger):
                 client_sock, addr = self.server_socket.accept()
                 print(f"[TCP Server] Accepted connection from {addr}")
 
-                # AB HIER: Gemeinsamer Code!
+                # Common between server and client
                 self._manage_active_connection(client_sock)
+                # TODO: Consider using threads to use multiple connections
 
-                # Hinweis: Wenn wir nur EINEN Client gleichzeitig wollen,
-                # bleiben wir in _manage_active_connection hängen, bis er trennt.
-                # Wenn wir mehrere wollen, müssten wir hier einen Thread starten.
-
-        except OSError as e:
+        except Exception as e:
             if self.running:
                 print(f"[TCP Server] Error: {e}")
+        finally:
+                # Close listener socket upon closing the thread
+                if self.server_socket:
+                    self.server_socket.close()
 
     def _run_client(self):
         """
@@ -142,7 +137,7 @@ class TcpPassenger(BasePassenger):
 
         except Exception as e:
             print(f"[TCP Client] Connection failed: {e}")
-            # TODO: Hier wäre ein Retry sinnvoll
+            # TODO: Implement retry mechanism
 
     def _manage_active_connection(self, socket_obj):
         """
@@ -154,7 +149,7 @@ class TcpPassenger(BasePassenger):
             while self.running:
                 data = self.data_socket.recv(4096)
                 if not data:
-                    break # Verbindung vom Peer geschlossen
+                    break # Connection closed by peer.
 
                 # Daten vom TCP -> Carrier senden
                 self.carrier.send(data)
@@ -176,7 +171,7 @@ class TcpPassenger(BasePassenger):
                 self.data_socket.send(data)
             except Exception as e:
                 print(f"[TCP] Write error: {e}")
-                # Eventuell hier socket schließen, damit der Lese-Loop abbricht
+                # TODO: Consider closing the socket here
                 self.data_socket.close()
         else:
             print("[TCP] Warning: Data received but no active TCP connection.")

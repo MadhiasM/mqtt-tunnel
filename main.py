@@ -9,6 +9,7 @@
 # TODO: decouple passenger and carrier, maybe some session object that enables communication between passenger and carrier without them knowing details about each other
 # TODO: Consider handling of MTU, retransmission, sequencing, fragmentation/re-assembly through means of message headers/IDs handling within some separate module (framing?), maybe add some core/ directory for that
 # TODO: Check if the handling of how the role is handed over to the passenger and carrier can be improved
+# TODO: Include config.json, if not already done
 
 import argparse
 import logging
