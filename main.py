@@ -31,10 +31,11 @@ def parse_args():
     parser.add_argument("--mqtt-user", help="MQTT Username")
     parser.add_argument("--mqtt-pass", help="MQTT Password")
     parser.add_argument("--mqtt-ca-cert", help="MQTT Certificate path")
+    parser.add_argument("--mqtt-qos", choices=[0, 1, 2], default=0, type=int, help="MQTT QoS")
 
     # TCP Config
     parser.add_argument("--tcp-port", type=int, required=True, help="Local TCP Listen Port")
-    parser.add_argument("--tcp-buffer-size", type=int, help="Buffer size of the TCP socket")
+    parser.add_argument("--tcp-buffer-size", default=65536, type=int, help="Buffer size of the TCP socket")
 
     return parser.parse_args()
 
@@ -50,11 +51,13 @@ def main():
         role=args.role,
         username=args.mqtt_user,
         password=args.mqtt_pass,
-        ca_certs=args.mqtt_ca_cert
+        ca_certs=args.mqtt_ca_cert,
+        qos=args.mqtt_qos
     )
     tcp_conf = TcpPassengerConfig(
         port=args.tcp_port,
-        role=args.role
+        role=args.role,
+        buffer_size=args.tcp_buffer_size
     )
 
     # Instantiate

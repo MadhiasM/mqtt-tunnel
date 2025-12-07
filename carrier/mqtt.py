@@ -36,7 +36,7 @@ class MqttConfig:
     host: str
     port: int
     role: str
-    qos: int = 1
+    qos: int = 0 # TODO: since default is defined already in argparse, it does not need to be defined here again
     username: Optional[str] = None
     password: Optional[str] = None
     ca_certs: Optional[str] = None

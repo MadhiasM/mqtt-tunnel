@@ -20,7 +20,7 @@ from carrier.base_carrier import BaseCarrier
 class TcpPassengerConfig:
     port: int
     role: str
-    buffer_size: int = 1400
+    buffer_size: int = 65536 # TODO: since default is defined already in argparse, it does not need to be defined here again
     host: str = 'localhost'
 
 class TcpPassenger(BasePassenger):
@@ -155,7 +155,7 @@ class TcpPassenger(BasePassenger):
                 if not data:
                     break # Connection closed by peer.
 
-                print(f"[{self.cfg.role}] TCP->MQTT {len(data)} bytes: {data[:64].hex()}")
+                #print(f"[{self.cfg.role}] TCP->MQTT {len(data)} bytes: {data[:64].hex()}")
                 # Send data that was received from TCP socket to carrier
                 self.carrier.send(data)
 
@@ -177,11 +177,10 @@ class TcpPassenger(BasePassenger):
 
         if self.data_socket:
             try:
-                print(f"[{self.cfg.role}] MQTT->TCP {len(data)} bytes: {data[:64].hex()}")
-                self.data_socket.send(data)
+                #print(f"[{self.cfg.role}] MQTT->TCP {len(data)} bytes: {data[:64].hex()}")
+                self.data_socket.send(data) # TODO: Test wether send or sendall is better
             except Exception as e:
                 print(f"[TCP] Write error: {e}")
-                # TODO: Consider closing the socket here
                 self.data_socket.close()
                 self.data_socket = None
         else:
