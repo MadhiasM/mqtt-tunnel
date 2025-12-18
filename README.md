@@ -9,7 +9,7 @@
 - **16.01.:** Abgabe (Schriftliche Ausarbeitung + Code)
 - **31.01.:** Vortrag
 ___
-## Next Steps (Ziel: 1 Woche)
+## Next Steps
 
 - **Mathias**
 	- [ ] Übrige Einsendeaufgaben durch den MQTT Tunnel (SOCKS) jagen.
@@ -17,12 +17,39 @@ ___
 	- [ ] Instabile Verbindungen simulieren (Mobile Daten).
 	- [ ] Buffer Size massiv hochdrehen.
 	- [ ] README.md für die Nutzung erstellen. z.B. für SSH: `python3 main.py --role remote --mqtt-host mathiasjetson.local --mqtt-port 1883 --tcp-port 22`, `python3 main.py --role local --mqtt-host mathiasjetson.local --mqtt-port 1883 --tcp-port 2222`, `ssh -p 2222 localhost`
+	- [ ] Nutzung von threading / asyncio-mqtt  evaluieren. Threading wenn möglich aus tcp raus abstrahieren
+	- [ ] Entkopplung von Carrier und Passenger prüfen (Dependency Injection, Middlelayer/Link, ...)
+	- [ ] Nutzung von Strategy Pattern für Rollen statt if/else evaluieren, und wie sie dann an Passenger und Carrier übergeben werden
+	- [ ] Refactor um local und remote zu entkoppeln (eigene Klassen?, ...) statt branching:
+	      # Close the data socket
+        if self.data_socket:
+            self.data_socket.close()
+        # Close the listener on server side
+        if self.server_socket:
+            self.server_socket.close()
+        print("[TCP] Passenger stopped.")
+  - [ ] tcp socket: send() oder sendall()?
+  - [ ] tunnel.py oder main.py?
+  - [ ] Prüfen, ob man die CLI arguments weniger abhängig von den genutzten passenger/carrier protokollen machen kann
+ - [ ] Carrier und Passenger als CLI Argument / in Config.json übergeben (mit Default-Werten: `--carrier mqtt --passenger tcp`)
+ - [ ] Eigener Header/Counter innerhalb payload notwendig? Handling von MTU, retransmission, sequencing, fragmentation/re-assembly durch message headers/IDs
+ - [ ] Prüfe Factory Method um den Client zu bauen: build_mqtt_client(config)
+ - [ ] Überlegen, ob loop_forever (blocking) oder loop_start() oder eine reconnection methode: self.client.reconnect_delay_set(min_delay=1, max_delay=30)
+- [ ] Validierung von Inputs: z.B. Ports zwischen 0 und 65535
+- [ ] role aus der Carrier Klasse entfernen. Stattdessen die Topics übergeben? Dadurch würde das role-branching wegfallen
+        
+	
+	
 - **Robert**
 	- [ ] Latenzanalyse durchführen (Einfluss von Packet/Message/Buffer Size Limits).
+	- [ ] Sockets: Verbesserungen im Code (Robustheit, siehe [Docs]([https://docs.python.org/3/howto/sockets.html](https://docs.python.org/3/howto/sockets.html "https://docs.python.org/3/howto/sockets.html")))
+	- [ ] Server für MQTT Broker + VPN Server bereitstellen
 - **Lars**
 	- [ ] Analyse von `max_inflight_bytes` / `messages` und QoS-Settings auf den Durchsatz.
+	- [ ] UDP
 - **Gemeinsam**
 	- [ ] Dokumentation der Implementierungsentscheidungen für das Paper fortführen.
+	- [ ] Issues mit Ideen erzeugen
 ___
 ___
 ## Anforderungen
@@ -189,6 +216,7 @@ ___
 		- [ ] 3 ptunnel
 		- [ ] 4 VPN über SSH via ptunnel
 ___
+
 ### Trägerprotokollauswahl (Tunnel/carrier)
 [Carrier und Passenger Protokolle](https://tsbates.com/blog/transport-vs-carrier-vs-passenger-protocols/)
 - [MQTT](https://github.com/mqtt/mqtt.org)
@@ -226,6 +254,28 @@ ___
 - [X] Proof of Concept
 	- steht und funktioniert
 - [ ] TODO: offene TODO Punkte implementieren
+- [ ] Features:
+	- [x] Konfiguration über CLI / argparse
+		- [ ] Unabhängiger von Passenger / Client (--passenger tcp, ...)
+	- [ ] Konfiguration über config-File
+	- [x] Modular (Carrier / Passenger)
+		- [ ] Carrier und passenger unabhäng voneinander machen (aktuell: Dependency Injection, ok?)
+		- [ ] Abhängigkeit von Role reduzieren? Strategy Pattern instead of if/else
+	- [x] Carrier
+		- [x] MQTT
+			- [x] 1883 via LAN
+			- [x] 8883 (TLS Certs + User/Password) incl. WAN access
+			- [ ] Control-Kanal für Austausch Session ID , Starten des Remote-Clients, Aufbau/Beenden Verbindung, ... (parallel zu eigentlichem Daten-Tunnel) (siehe am Ende dieses [Chats](https://chatgpt.com/c/6935ec08-4c3c-8330-b4c7-3e5347d5a9ee)), Negotiation von Ports etc. dann über den Control-Tunnel
+			- [ ] WebSockets (443)
+			- [ ] [asyncio-mqtt](https://pypi.org/project/asyncio-mqtt/) (Asyn-Wrappper um Paho)?
+	- [ ] Passenger
+		- [x] TCP
+			- [ ] Weniger abhängig vom Threading machen?
+			- [x] Lazy Connect on Remote / Eager Connect on Local
+		- [ ] UDP
+		- [ ] IP
+	- [ ] Logging
+	- [ ] Retry/Reconnection-Mechanismus (Broker Reset, MQTT Client Reset (reconnnect_on_failure), Passenger (TCP) Reset)
 ## Test & Validierung
 - [ ] TODO: Latenz
 - [ ] TODO: Bandbreite

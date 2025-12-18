@@ -4,23 +4,11 @@ from dataclasses import dataclass
 from .base_passenger import BasePassenger
 from carrier.base_carrier import BaseCarrier
 
-# TODO: Check if I need threading / async here.
-# TODO: Regarding Carrier:
-#       TODO: Check if (Base) Carrier should be imported here or only in main to remove dependency / coupling
-#       TODO: Check if it should be started/stopped in here or in main
-# TODO: Check if the dependency on the role is necessary here od if there is a more elegant way
-# TODO: Check if the if else between local and remote role can behandled in a more elegant way
-# TODO: Check if dependency injection of the carrier into the passenger is the best option here, or if there can be some middle layer like core/link.py, which handles this.
-# TODO: Use Strategy Pattern for the roles instead of if/else
-# TODO: Check if lazy reconnect on remote is causing issues (lazy: only connect on the first message)
-# TODO: Use logging instead of print
-# TODO: Maybe create self.running Flag
-
 @dataclass
 class TcpPassengerConfig:
     port: int
     role: str
-    buffer_size: int = 65536 # TODO: since default is defined already in argparse, it does not need to be defined here again
+    buffer_size: int = 65536
     host: str = 'localhost'
 
 class TcpPassenger(BasePassenger):
@@ -37,19 +25,19 @@ class TcpPassenger(BasePassenger):
         """
         Helper to create a standard TCP socket.
         """
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Create stream (TCP) based IPv4 socket
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         return s
 
     def start(self):
         """
         Create thread to run server or client instance
         """
-
         self.carrier.start()
 
-        # TODO: Check if this if / else can be factored out, since the method is similar
+        # NOTE: Role-based branching kept intentionally for now.
+        # See README.md for refactor ideas (Strategy pattern).
         if self.cfg.role == 'local':
-            # Server starts in own thread, to loop while until connection is coming and accepted
+            # Server starts in own thread, to loop until connection is incoming and accepted
             threading.Thread(target=self._run_server, daemon=True).start()
 
         elif self.cfg.role == 'remote':
@@ -68,7 +56,6 @@ class TcpPassenger(BasePassenger):
         if self.data_socket:
             self.data_socket.close()
         # Close the listener on server side
-        # TODO: Only call this in correct role (local)
         if self.server_socket:
             self.server_socket.close()
         print("[TCP] Passenger stopped.")
@@ -85,7 +72,6 @@ class TcpPassenger(BasePassenger):
             print("[TCP] Program running. Press Ctrl+C to stop.")
 
             # Block the main thread until KeyboardInterrupt (not busy)
-            # TODO: Check if this waiting is mandatory, old implementation worked without it
             threading.Event().wait()
 
         except KeyboardInterrupt:
@@ -111,7 +97,6 @@ class TcpPassenger(BasePassenger):
                 print(f"[TCP Server] Accepted connection from {addr}")
 
                 # Common between server and client
-                # TODO: Consider using threads to use multiple connections
                 self._manage_active_connection(client_sock)
 
         except Exception as e:
@@ -127,7 +112,6 @@ class TcpPassenger(BasePassenger):
         Connects to the target host/port (Remote Role)
         """
         print(f"[TCP Client] Connecting to {self.cfg.host}:{self.cfg.port}...")
-        # TODO: Retry-mechanism needed, if connection drops?
         try:
             sock = self._create_socket()
             sock.connect((self.cfg.host, self.cfg.port))
@@ -150,7 +134,6 @@ class TcpPassenger(BasePassenger):
         """
         try:
             while self.running and self.data_socket:
-                # TODO: Factor out the buffer size as (config) parameter
                 data = self.data_socket.recv(self.cfg.buffer_size)
                 if not data:
                     break # Connection closed by peer.
@@ -178,7 +161,7 @@ class TcpPassenger(BasePassenger):
         if self.data_socket:
             try:
                 #print(f"[{self.cfg.role}] MQTT->TCP {len(data)} bytes: {data[:64].hex()}")
-                self.data_socket.send(data) # TODO: Test wether send or sendall is better
+                self.data_socket.send(data)
             except Exception as e:
                 print(f"[TCP] Write error: {e}")
                 self.data_socket.close()
