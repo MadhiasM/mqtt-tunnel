@@ -31,7 +31,7 @@ class MqttCarrier(BaseCarrier):
         self.cfg = config  # Store the whole config object
 
         # Setup Client
-        self.client = mqtt.Client()
+        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
         topic_client_to_server = "tunnel/c2s"
         topic_server_to_client = "tunnel/s2c"
@@ -80,11 +80,11 @@ class MqttCarrier(BaseCarrier):
         """
         self.client.publish(self.topic_pub, payload, self.cfg.qos)
 
-    def _on_connect(self, client, userdata, flags, rc):
+    def _on_connect(self, client, userdata, flags, reason_code, properties):
         """
         Internal callback to subscribe to the subscribe topic on connection
         """
-        print(f"[MQTT] Connected (Code {rc}). Subscribing to {self.topic_sub}")
+        print(f"[MQTT] Connected (Code {reason_code}). Subscribing to {self.topic_sub}")
         client.subscribe(self.topic_sub)
 
     def _on_message(self, client, userdata, msg):
