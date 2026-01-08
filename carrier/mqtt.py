@@ -1,3 +1,4 @@
+import sys
 import paho.mqtt.client as mqtt
 from dataclasses import dataclass
 from typing import Optional, Callable
@@ -64,7 +65,11 @@ class MqttCarrier(BaseCarrier):
         Connect the MQTT client to the broker and keep running
         """
         print(f"[MQTT] Connecting to {self.cfg.host}...")
-        self.client.connect(self.cfg.host, self.cfg.port, self.cfg.keep_alive_time)
+        try:
+            self.client.connect(self.cfg.host, self.cfg.port, self.cfg.keep_alive_time)
+        except Exception as e:
+          print("Connection failed: ", e)
+          sys.exit(1)
         self.client.loop_start()
 
     def stop(self):
