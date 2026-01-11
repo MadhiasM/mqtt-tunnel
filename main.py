@@ -18,6 +18,7 @@ def parse_args():
     parser.add_argument("--mqtt-ca-cert", help="MQTT Certificate path")
     parser.add_argument("--mqtt-qos", choices=[0, 1, 2], default=0, type=int, help="MQTT QoS")
     parser.add_argument("--mqtt-keep-alive-time", default=60, type=int, help="MQTT Keep Alive Time")
+    parser.add_argument("--mqtt-topic", default="tunnel", type=str, help="Base topic for the tunnel (default: 'tunnel'). Will append /upstream and /downstream.")
 
     # TCP Config
     parser.add_argument("--tcp-port", type=int, required=True, help="Local TCP Listen Port")
@@ -49,7 +50,8 @@ def main():
         password=args.mqtt_pass,
         ca_certs=args.mqtt_ca_cert,
         qos=args.mqtt_qos,
-        keep_alive_time=args.mqtt_keep_alive_time
+        keep_alive_time=args.mqtt_keep_alive_time,
+        topic=args.mqtt_topic
     )
     tcp_conf = TcpPassengerConfig(
         port=args.tcp_port,
