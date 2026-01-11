@@ -1,4 +1,5 @@
 import logging
+import sys
 import paho.mqtt.client as mqtt
 from dataclasses import dataclass
 from typing import Optional, Callable
@@ -34,7 +35,7 @@ class MqttCarrier(BaseCarrier):
         self.cfg = config  # Store the whole config object
 
         # Setup Client
-        self.client = mqtt.Client()
+        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
         topic_client_to_server = "tunnel/c2s"
         topic_server_to_client = "tunnel/s2c"
@@ -72,8 +73,8 @@ class MqttCarrier(BaseCarrier):
         try:
             self.client.connect(self.cfg.host, self.cfg.port, self.cfg.keep_alive_time)
         except Exception as e:
-                logger.error(f"[MQTT] Failed to connect to broker at {self.cfg.host}: {e}")
-                sys.exit(1)
+          logger.error(f"[MQTT]Connection failed: {e}")
+          sys.exit(1)
         self.client.loop_start()
 
     def stop(self):
@@ -89,11 +90,11 @@ class MqttCarrier(BaseCarrier):
         """
         self.client.publish(self.topic_pub, payload, self.cfg.qos)
 
-    def _on_connect(self, client, userdata, flags, rc):
+    def _on_connect(self, client, userdata, flags, reason_code, properties):
         """
         Internal callback to subscribe to the subscribe topic on connection
         """
-        logger.info(f"[MQTT] Connected (Code {rc}). Subscribing to {self.topic_sub}")
+        logger.info(f"[MQTT] Connected (Code {reason_code}). Subscribing to {self.topic_sub}")
         client.subscribe(self.topic_sub)
 
     def _on_message(self, client, userdata, msg):
