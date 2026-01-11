@@ -2,6 +2,7 @@ import argparse
 import logging
 from carrier.mqtt import MqttCarrier, MqttConfig
 from passenger.tcp import TcpPassenger, TcpPassengerConfig
+from passenger.udp import UdpPassenger, UdpPassengerConfig
 
 def parse_args():
     parser = argparse.ArgumentParser(description="MQTT Tunnel")
@@ -21,8 +22,15 @@ def parse_args():
     parser.add_argument("--mqtt-topic", default="tunnel", type=str, help="Base topic for the tunnel (default: 'tunnel'). Will append /upstream and /downstream.")
 
     # TCP Config
-    parser.add_argument("--tcp-port", type=int, required=True, help="Local TCP Listen Port")
+    parser.add_argument("--tcp-port", type=int, required=False, help="Local TCP Listen Port")
     parser.add_argument("--tcp-buffer-size", default=65536, type=int, help="Buffer size of the TCP socket")
+
+    # UDP Config
+    parser.add_argument("--udp-listen-ip", type=str, default='0.0.0.0', help="UDP Listen IP")
+    parser.add_argument("--udp-listen-port", type=int, required=False, help="UDP Listen Port")
+    parser.add_argument("--udp-ip", type=str, default='127.0.0.1', help="UDP Destination IP")
+    parser.add_argument("--udp-send-port", type=int, required=False, help="UDP connect to port")
+    parser.add_argument("--buffer-size", default=65536, type=int, help="Buffer size of the TCP socket")
 
     return parser.parse_args()
 
@@ -56,12 +64,20 @@ def main():
     tcp_conf = TcpPassengerConfig(
         port=args.tcp_port,
         role=args.role,
-        buffer_size=args.tcp_buffer_size
+        buffer_size=args.buffer_size
+    )
+    udp_conf = UdpPassengerConfig(
+        listen_ip = args.udp_listen_ip,
+        listen_port = args.udp_listen_port,
+        send_ip = args.udp_ip,
+        role=args.role,
+        send_port = args.udp_send_port,
+        buffer_size = args.buffer_size
     )
 
     # Instantiate
     carrier = MqttCarrier(config=mqtt_conf)
-    passenger = TcpPassenger(carrier=carrier, config=tcp_conf)
+    passenger = UdpPassenger(carrier=carrier, config=udp_conf)
 
     # Run
     try:
