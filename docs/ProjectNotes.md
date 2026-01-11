@@ -36,17 +36,19 @@ ___
  - [ ] Prüfe Factory Method um den Client zu bauen: build_mqtt_client(config)
  - [ ] Überlegen, ob loop_forever (blocking) oder loop_start() oder eine reconnection methode: self.client.reconnect_delay_set(min_delay=1, max_delay=30)
 - [ ] Validierung von Inputs: z.B. Ports zwischen 0 und 65535
-- [ ] role aus der Carrier Klasse entfernen. Stattdessen die Topics übergeben? Dadurch würde das role-branching wegfallen
-        
-	
-	
+- [ ] Role aus der Carrier Klasse entfernen. Stattdessen die Topics übergeben? Dadurch würde das role-branching wegfallen
+
 - **Robert**
 	- [ ] Latenzanalyse durchführen (Einfluss von Packet/Message/Buffer Size Limits).
 	- [ ] Sockets: Verbesserungen im Code (Robustheit, siehe [Docs]([https://docs.python.org/3/howto/sockets.html](https://docs.python.org/3/howto/sockets.html "https://docs.python.org/3/howto/sockets.html")))
 	- [ ] Server für MQTT Broker + VPN Server bereitstellen
+	- [ ] UDP
+	- [ ] Wireshark
+	- [ ] Verbindungsprobleme (jeder 2. Verbindungsversuch, vorige Verbindung nicht sauber geschlossen?)
 - **Lars**
 	- [ ] Analyse von `max_inflight_bytes` / `messages` und QoS-Settings auf den Durchsatz.
-	- [ ] UDP
+	- [X] UDP - kein Erfolg
+	- [ ] Qos testen
 - **Gemeinsam**
 	- [ ] Dokumentation der Implementierungsentscheidungen für das Paper fortführen.
 	- [ ] Issues mit Ideen erzeugen
@@ -58,24 +60,23 @@ ___
 - [x] Tunnel sollte Protokoll verwenden, das trotz Firewalling / Proxies verfügbar ist
   - Wie verbreitet ist das Protokoll? MQTT.
   - Sind die genutzten Ports in bestimmten Umgebungen freigeschaltet? MQTT.
-- [ ] mindestens einen Tunnel implementieren, wie HTTP(S), optional allgemeine TCP-Verbindungen (z. B. SSH, WireGuard)
+- [x] mindestens einen Tunnel implementieren, wie HTTP(S), optional allgemeine TCP-Verbindungen (z. B. SSH, WireGuard)
   - Erster Ansatz: Allgemeiner IP (TCP/UDP) Tunnel, ermöglicht auch DNS Anfragen
-- [ ] mit vorhandenen Libraries implementierbar sein, sodass der Projektrahmen nicht gesprengt wird, einfaches und effizientes Debugging möglich ist
+- [x] mit vorhandenen Libraries implementierbar sein, sodass der Projektrahmen nicht gesprengt wird, einfaches und effizientes Debugging möglich ist
 
-1. [ ] Erörtern Sie, welches Protokoll Ihr Trägerprotokoll wird.
+1. [x] Erörtern Sie, welches Protokoll Ihr Trägerprotokoll wird.
 	- Broker-Basiertes Protokoll, wo es bisher noch nicht so viele Lösungen gibt:
-		- [ ] Warum MQTT? Verbreitung, Firewallumgehung möglich, Libraries, ...
-		- [ ] Zuhilfenahme von Tools/Frameworks explizit empfohlen
-2. [ ] Erörtern Sie, ob Sie allgemein alle TCP oder UDP oder IP-Verbindungen tunneln wollen, oder nur HTTP(S).
-	- [ ] Welche Protokolle werden getunnelt?
-		- [ ] Idealfall: alles weitere mittels SSH, OpenVPN oder Wireguard durchtunneln
-		- [ ] Alternativ: Nur HTTP(s) Anfragen tunneln
-		- [ ] Muss begründet werden
-3. [ ] Implementieren Sie Ihren Tunnel. Dokumentieren Sie Implementationsentscheidungen.
+		- [x] Warum MQTT? Verbreitung, Firewallumgehung möglich, Libraries, ...
+		- [x] Zuhilfenahme von Tools/Frameworks explizit empfohlen
+2. [x] Erörtern Sie, ob Sie allgemein alle TCP oder UDP oder IP-Verbindungen tunneln wollen, oder nur HTTP(S).
+	- [x] Welche Protokolle werden getunnelt?
+		- [x] Idealfall: alles weitere mittels SSH, OpenVPN oder Wireguard durchtunneln
+		- [x] Alternativ: Nur HTTP(s) Anfragen tunneln
+		- [x] Muss begründet werden
+		- [ ] Wieso kein IP?
+3. [x] Implementieren Sie Ihren Tunnel. Dokumentieren Sie Implementationsentscheidungen.
 	- Hinweis: Dazu sollten Sie auch die Anforderungen und Lösungsideen gründlich analysieren, der Anspruch ist, daß die Beschreibung zwar abstrakt, aber konkret genug ist, daß auf Ihr Darstellung aufbauend jemand die Implementierung erfolgreich starten kann. Der Teufel liegt bekanntlich im Detail, das vielleicht auch erst bei Tests und der Umsetzung auffällt, das müssen Sie nicht entdecken. Die Ergebnisse sollten sich in Ihrem Paper wiederfinden.
-
 4. [ ] Testen Sie Ihren Tunnel gründlich. Dazu gehört auch, den Tunnel mal mit tcpdump, Wireshark o.ä. aufzuzeichnen und zu prüfen, was ein Dritter sieht.
-
 5. [ ] Dokumentieren Sie in Ihrer Abgabe, welche Gruppenmitglieder an welchem Teil der Aufgabe mitgewirkt haben, wer für welchen Teil "den Hut auf hatte" und welchen Anteil welches Gruppenmitglied an dem Teil hatte. Im Idealfall sollten im Ergebnis alle Gruppenmitglieder etwa gleich viel geleistet haben.
 ___
 ## Analyse
@@ -188,22 +189,22 @@ ___
 		- `ssh -D 1234 mathias@localhost -p 2222 -v` und im Browser dann  SOCKS Host localhost mit Port 1234 einstellen
 		- Funktioniert, 6 MBit/s Upload, 5 MBit/s Download, Latenz 200 ms. Reicht für einfaches Browsing. Videos ok, Zeitkritsiches wie Livestreaming, Video/Voice Calls nicht 
 - [ ] Alternative: IP-Tunnel mittels **TUN Devices** (OpenVPN/Wireguard). Damit gehen TCP, UDP und DNS durch. (Analog zur Einsendeaufgabe 2d)
-	- TUN-Device, der sämtlichen Traffic abfängt, statt Socket, der nur auf einem Port lauscht.
-	- Bibliotheken `pytun` oder direkt SysCalls mit `fcntl` und `/dev/net/tun` / `os.read(tun_fd, ...)`, ...
-	- Analog zur Einsendeaufgabe 2d:
-		- [ ] Virtuelle IP Adressen 
-			- Subnetz `10.0.0.0/24`
-			- Local `10.0.0.2` Remote `10.0.0.1`.
-		- [ ] Routing:
-			- Routing Tabellen: `ip route add default via 10.0.0.1 dev tun0`
-			- Aber eine Host-Route zum zum MQTT muss gesetzt werden, sonst Routing Loop
-		- [ ] NAT / Masquerading auf Server Seite.
-			- Remote Tunnel muss Paket in eigenes TUN Interface schreiben. 
-			- IP Forwarding muss aktiviert sein `sysctl -w net.ipv4.ip_forward=1`
-			- NAT Regel: Masquerading, damit er so tut, als käme das Paket vom ihm selbst über `iptables`, sodass die Antwort auch zum Remote zurück kommt, und nicht direkt zum Local
-		- [ ] Fragmentierung vermeiden:
-			- 1500 Byte Ethernet Frame in TCP verpacken, dadurch ist letzteres größer als 1500 Byte. Das wird dann wiederum fragmentiert. 
-			- Daher ggf. MTU vom TUN auf 1400 oder so setzen `sudo ip link set tun0 mtu 1400`
+		- TUN-Device, der sämtlichen Traffic abfängt, statt Socket, der nur auf einem Port lauscht.
+		- Bibliotheken `pytun` oder direkt SysCalls mit `fcntl` und `/dev/net/tun` / `os.read(tun_fd, ...)`, ...
+		- Analog zur Einsendeaufgabe 2d:
+			- [ ] Virtuelle IP Adressen 
+				- Subnetz `10.0.0.0/24`
+				- Local `10.0.0.2` Remote `10.0.0.1`.
+			- [ ] Routing:
+				- Routing Tabellen: `ip route add default via 10.0.0.1 dev tun0`
+				- Aber eine Host-Route zum zum MQTT muss gesetzt werden, sonst Routing Loop
+			- [ ] NAT / Masquerading auf Server Seite.
+				- Remote Tunnel muss Paket in eigenes TUN Interface schreiben. 
+				- IP Forwarding muss aktiviert sein `sysctl -w net.ipv4.ip_forward=1`
+				- NAT Regel: Masquerading, damit er so tut, als käme das Paket vom ihm selbst über `iptables`, sodass die Antwort auch zum Remote zurück kommt, und nicht direkt zum Local
+			- [ ] Fragmentierung vermeiden:
+				- 1500 Byte Ethernet Frame in TCP verpacken, dadurch ist letzteres größer als 1500 Byte. Das wird dann wiederum fragmentiert. 
+				- Daher ggf. MTU vom TUN auf 1400 oder so setzen `sudo ip link set tun0 mtu 1400`
 
 - **Aktueller Test-Status:** Nutzung von SSH als Zwischenschicht (Madrioschka/Frankenstein: `MQTT | SSH | Nutzdaten`), soll aber eliminiert werden zugunsten von reiner `MQTT | Nutzdaten` Implementierung.
 	- Hier lassen sich die  Einsendeaufgabe dann ebenfalls drüber tunneln.
