@@ -19,6 +19,7 @@ class MqttConfig:
     role: str
     qos: int
     keep_alive_time: int
+    topic: str
     username: Optional[str] = None
     password: Optional[str] = None
     ca_certs: Optional[str] = None
@@ -37,12 +38,13 @@ class MqttCarrier(BaseCarrier):
         # Setup Client
         self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
-        topic_client_to_server = "tunnel/c2s"
-        topic_server_to_client = "tunnel/s2c"
+
+        topic_upstream = f"{self.cfg.topic}/upstream"
+        topic_downstream = f"{self.cfg.topic}/downstream"
         if self.cfg.role == 'local':
-            self.topic_pub, self.topic_sub = topic_client_to_server, topic_server_to_client
+            self.topic_pub, self.topic_sub = topic_upstream, topic_downstream
         elif self.cfg.role == 'remote':
-            self.topic_pub, self.topic_sub = topic_server_to_client, topic_client_to_server
+            self.topic_pub, self.topic_sub = topic_downstream, topic_upstream
         else:
             role_error_msg = f"Invalid role: {self.cfg.role!r}. Expected 'local' or 'remote'."
             logger.error(msg)
