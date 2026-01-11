@@ -7,6 +7,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="MQTT Tunnel")
 
     # General
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose/debug logging")
     parser.add_argument("--role", required=True, choices=['local', 'remote'], help="Role of this tunnel end")
 
     # MQTT Config
@@ -25,9 +26,19 @@ def parse_args():
     return parser.parse_args()
 
 def main():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
     args = parse_args()
+
+    logging_level = logging.DEBUG if args.verbose else logging.INFO
+    logging.basicConfig(
+        level=logging_level,
+        format=(
+            "%(asctime)s | "
+            "%(name)-15s | "
+            "%(levelname)-7s | "
+            "%(message)s"
+        ),
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
 
     # Setup Configs
     mqtt_conf = MqttConfig(
@@ -54,7 +65,7 @@ def main():
     try:
         passenger.run()
     except KeyboardInterrupt:
-        logging.info("Stopping tunnel...")
+        logger.info("Stopping via Keyboard Interrupt...")
         passenger.stop()
 
 if __name__ == "__main__":

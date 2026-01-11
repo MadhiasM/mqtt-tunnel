@@ -1,8 +1,11 @@
+import logging
 import socket
 import threading
 from dataclasses import dataclass
 from .base_passenger import BasePassenger
 from carrier.base_carrier import BaseCarrier
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class TcpPassengerConfig:
@@ -42,7 +45,7 @@ class TcpPassenger(BasePassenger):
 
         elif self.cfg.role == 'remote':
             # Client does not connect immediately, but waits for data (Lazy Connection).
-            print(f"[TCP Client] Ready. Waiting for incoming data to connect to {self.cfg.host}:{self.cfg.port}...")
+            logger.info(f"[TCP Client] Ready. Waiting for incoming data to connect to {self.cfg.host}:{self.cfg.port}...")
 
     def stop(self):
         """
@@ -58,7 +61,7 @@ class TcpPassenger(BasePassenger):
         # Close the listener on server side
         if self.server_socket:
             self.server_socket.close()
-        print("[TCP] Passenger stopped.")
+        logger.info("[TCP] Passenger stopped.")
 
     def run(self):
         """
@@ -69,13 +72,14 @@ class TcpPassenger(BasePassenger):
         try:
             self.start()
 
-            print("[TCP] Program running. Press Ctrl+C to stop.")
+            logger.info("[TCP] Program running. Press Ctrl+C to stop.")
 
             # Block the main thread until KeyboardInterrupt (not busy)
             threading.Event().wait()
 
         except KeyboardInterrupt:
-            print("\n[TCP] Stopping via Keyboard Interrupt...")
+            print()
+            logger.info("[TCP] Stopping via Keyboard Interrupt...")
         finally:
             self.stop()
 
@@ -89,19 +93,19 @@ class TcpPassenger(BasePassenger):
         try:
             self.server_socket.bind(("0.0.0.0", self.cfg.port))
             self.server_socket.listen(1)
-            print(f"[TCP Server] Waiting for connections on port {self.cfg.port}...")
+            logger.info(f"[TCP Server] Waiting for connections on port {self.cfg.port}...")
 
             while self.running:
                 # Hier warten wir auf den Client (blockierend)
                 client_sock, addr = self.server_socket.accept()
-                print(f"[TCP Server] Accepted connection from {addr}")
+                logger.info(f"[TCP Server] Accepted connection from {addr}")
 
                 # Common between server and client
                 self._manage_active_connection(client_sock)
 
         except Exception as e:
             if self.running:
-                print(f"[TCP Server] Error: {e}")
+                logger.info(f"[TCP Server] Error: {e}")
         finally:
                 # Close listener socket upon closing the thread
                 if self.server_socket:
@@ -111,7 +115,7 @@ class TcpPassenger(BasePassenger):
         """
         Connects to the target host/port (Remote Role)
         """
-        print(f"[TCP Client] Connecting to {self.cfg.host}:{self.cfg.port}...")
+        logger.info(f"[TCP Client] Connecting to {self.cfg.host}:{self.cfg.port}...")
         try:
             sock = self._create_socket()
             sock.connect((self.cfg.host, self.cfg.port))
@@ -119,7 +123,7 @@ class TcpPassenger(BasePassenger):
             # Start reading thread
             threading.Thread(target=self._read_loop, daemon=True).start()
         except Exception as e:
-            print(f"[TCP Client] Connection failed: {e}")
+            logger.info(f"[TCP Client] Connection failed: {e}")
 
     def _manage_active_connection(self, socket_obj):
         """
@@ -138,14 +142,14 @@ class TcpPassenger(BasePassenger):
                 if not data:
                     break # Connection closed by peer.
 
-                #print(f"[{self.cfg.role}] TCP->MQTT {len(data)} bytes: {data[:64].hex()}")
+                logger.debug(f"[{self.cfg.role}] TCP->MQTT {len(data)} bytes: {data[:64].hex()}")
                 # Send data that was received from TCP socket to carrier
                 self.carrier.send(data)
 
         except Exception as e:
-            print(f"[TCP] Connection lost: {e}")
+            logger.warning(f"[TCP] Connection lost: {e}")
         finally:
-            print("[TCP] Closing active connection")
+            logger.info("[TCP] Closing active connection")
             if self.data_socket:
                 self.data_socket.close()
             self.data_socket = None
@@ -160,11 +164,11 @@ class TcpPassenger(BasePassenger):
 
         if self.data_socket:
             try:
-                #print(f"[{self.cfg.role}] MQTT->TCP {len(data)} bytes: {data[:64].hex()}")
+                logger.debug(f"[{self.cfg.role}] MQTT->TCP {len(data)} bytes: {data[:64].hex()}")
                 self.data_socket.send(data)
             except Exception as e:
-                print(f"[TCP] Write error: {e}")
+                logger.error(f"[TCP] Write error: {e}")
                 self.data_socket.close()
                 self.data_socket = None
         else:
-            print("[TCP] Warning: Data received but no active TCP connection.")
+            logger.warning("[TCP] Warning: Data received but no active TCP connection.")

@@ -1,7 +1,10 @@
+import logging
 import paho.mqtt.client as mqtt
 from dataclasses import dataclass
 from typing import Optional, Callable
 from .base_carrier import BaseCarrier
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class MqttConfig:
@@ -40,7 +43,9 @@ class MqttCarrier(BaseCarrier):
         elif self.cfg.role == 'remote':
             self.topic_pub, self.topic_sub = topic_server_to_client, topic_client_to_server
         else:
-            raise ValueError(f"Invalid role: {self.cfg.role!r}. Expected 'local' or 'remote'.")
+            role_error_msg = f"Invalid role: {self.cfg.role!r}. Expected 'local' or 'remote'."
+            logger.error(msg)
+            raise ValueError(msg)
 
         self.callback: Optional[Callable] = None
         self.client.on_connect = self._on_connect
@@ -63,8 +68,12 @@ class MqttCarrier(BaseCarrier):
         """
         Connect the MQTT client to the broker and keep running
         """
-        print(f"[MQTT] Connecting to {self.cfg.host}...")
-        self.client.connect(self.cfg.host, self.cfg.port, self.cfg.keep_alive_time)
+        logger.info(f"[MQTT] Connecting to {self.cfg.host}...")
+        try:
+            self.client.connect(self.cfg.host, self.cfg.port, self.cfg.keep_alive_time)
+        except Exception as e:
+                logger.error(f"[MQTT] Failed to connect to broker at {self.cfg.host}: {e}")
+                sys.exit(1)
         self.client.loop_start()
 
     def stop(self):
@@ -84,7 +93,7 @@ class MqttCarrier(BaseCarrier):
         """
         Internal callback to subscribe to the subscribe topic on connection
         """
-        print(f"[MQTT] Connected (Code {rc}). Subscribing to {self.topic_sub}")
+        logger.info(f"[MQTT] Connected (Code {rc}). Subscribing to {self.topic_sub}")
         client.subscribe(self.topic_sub)
 
     def _on_message(self, client, userdata, msg):
