@@ -2,6 +2,7 @@ import argparse
 import logging
 from carrier.mqtt import MqttCarrier, MqttConfig
 from passenger.tcp import TcpPassenger, TcpPassengerConfig
+from passenger.udp import UdpPassenger, UdpPassengerConfig
 
 def parse_args():
     parser = argparse.ArgumentParser(description="MQTT Tunnel")
@@ -9,6 +10,8 @@ def parse_args():
     # General
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose/debug logging")
     parser.add_argument("--role", required=True, choices=['local', 'remote'], help="Role of this tunnel end")
+    parser.add_argument("-u", action='store_true', help="Use UDP instead of TCP")
+    
 
     # MQTT Config
     parser.add_argument("--mqtt-host", required=True, help="MQTT Broker Host")
@@ -21,8 +24,13 @@ def parse_args():
     parser.add_argument("--mqtt-topic", default="tunnel", type=str, help="Base topic for the tunnel (default: 'tunnel'). Will append /upstream and /downstream.")
 
     # TCP Config
-    parser.add_argument("--tcp-port", type=int, required=True, help="Local TCP Listen Port")
-    parser.add_argument("--tcp-buffer-size", default=65536, type=int, help="Buffer size of the TCP socket")
+    parser.add_argument("--listen-port", type=int, required=False, help="Local Listen Port")
+
+    # UDP Config
+    parser.add_argument("--listen-ip", type=str, default='0.0.0.0', help="UDP Listen IP")
+    parser.add_argument("--dst-ip", type=str, default='127.0.0.1', help="Destination IP")
+    parser.add_argument("--dst-port", type=int, required=False, help="Destination Port")
+    parser.add_argument("--buffer-size", default=65536, type=int, help="Buffer size of the TCP socket")
 
     return parser.parse_args()
 
@@ -54,14 +62,28 @@ def main():
         topic=args.mqtt_topic
     )
     tcp_conf = TcpPassengerConfig(
-        port=args.tcp_port,
         role=args.role,
-        buffer_size=args.tcp_buffer_size
+        listen_ip = args.listen_ip,
+        listen_port = args.listen_port,
+        dst_ip = args.dst_ip,
+        dst_port = args.dst_port,
+        buffer_size = args.buffer_size,
+    )
+    udp_conf = UdpPassengerConfig(
+        role=args.role,
+        listen_ip = args.listen_ip,
+        listen_port = args.listen_port,
+        dst_ip = args.dst_ip,
+        dst_port = args.dst_port,
+        buffer_size = args.buffer_size,
     )
 
     # Instantiate
     carrier = MqttCarrier(config=mqtt_conf)
-    passenger = TcpPassenger(carrier=carrier, config=tcp_conf)
+    if args.u:
+        passenger = UdpPassenger(carrier=carrier, config=udp_conf)
+    else:
+        passenger = TcpPassenger(carrier=carrier, config=tcp_conf)
 
     # Run
     try:

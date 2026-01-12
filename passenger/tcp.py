@@ -9,10 +9,12 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class TcpPassengerConfig:
-    port: int
     role: str
+    listen_port: int
+    dst_port: int
+    listen_ip: str = '0.0.0.0'
+    dst_ip: str = '127.0.0.1'
     buffer_size: int = 65536
-    host: str = 'localhost'
 
 class TcpPassenger(BasePassenger):
     def __init__(self, carrier: BaseCarrier, config: TcpPassengerConfig):
@@ -45,7 +47,7 @@ class TcpPassenger(BasePassenger):
 
         elif self.cfg.role == 'remote':
             # Client does not connect immediately, but waits for data (Lazy Connection).
-            logger.info(f"[TCP Client] Ready. Waiting for incoming data to connect to {self.cfg.host}:{self.cfg.port}...")
+            logger.info(f"[TCP Client] Ready. Waiting for incoming data to connect to {self.cfg.dst_ip}:{self.cfg.dst_port}...")
 
     def stop(self):
         """
@@ -91,9 +93,9 @@ class TcpPassenger(BasePassenger):
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # Auto-reconnect if old socket is not yet cleared by OS, only required for Server
 
         try:
-            self.server_socket.bind(("0.0.0.0", self.cfg.port))
+            self.server_socket.bind((self.cfg.listen_ip, self.cfg.listen_port))
             self.server_socket.listen(1)
-            logger.info(f"[TCP Server] Waiting for connections on port {self.cfg.port}...")
+            logger.info(f"[TCP Server] Waiting for connections on {self.cfg.listen_ip}:{self.cfg.listen_port}...")
 
             while self.running:
                 # Hier warten wir auf den Client (blockierend)
@@ -115,10 +117,10 @@ class TcpPassenger(BasePassenger):
         """
         Connects to the target host/port (Remote Role)
         """
-        logger.info(f"[TCP Client] Connecting to {self.cfg.host}:{self.cfg.port}...")
+        logger.info(f"[TCP Client] Connecting to {self.cfg.dst_ip}:{self.cfg.dst_port}...")
         try:
             sock = self._create_socket()
-            sock.connect((self.cfg.host, self.cfg.port))
+            sock.connect((self.cfg.dst_ip, self.cfg.dst_port))
             self.data_socket = sock
             # Start reading thread
             threading.Thread(target=self._read_loop, daemon=True).start()
