@@ -85,6 +85,7 @@ python3 main.py --role remote --mqtt-host broker.example.com \
 | `--mqtt-ca-cert` | - | Path to CA certificate for TLS |
 | `--mqtt-qos` | `0` | MQTT QoS level (0, 1, or 2) |
 | `--mqtt-keep-alive-time` | `60` | Keep alive time in seconds |
+| `--mqtt-max-msg-size` | `268435456` | Message size limit for MQTT payloads |
 | `--mqtt-topic` | `tunnel` | Base topic for the tunnel |
 | `--mqtt-transport` | `tcp` | Transport (tcp or websockets) |
 | `--mqtt-ws-path` | `/mqtt` | MQTT WebSocket path |
