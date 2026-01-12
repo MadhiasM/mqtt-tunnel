@@ -20,6 +20,9 @@ class MqttConfig:
     qos: int
     keep_alive_time: int
     topic: str
+    transport: str
+    ws_path: str
+    tls_allow_insecure: bool
     username: Optional[str] = None
     password: Optional[str] = None
     ca_certs: Optional[str] = None
@@ -33,11 +36,15 @@ class MqttCarrier(BaseCarrier):
         :param topic_pub: Topic on which this client publishes
         :param topic_sub: Topic to which this client subscribes
         """
-        self.cfg = config  # Store the whole config object
+        self.cfg = config
 
-        # Setup Client
-        self.client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        self.client = mqtt.Client(
+            mqtt.CallbackAPIVersion.VERSION2,
+            transport=self.cfg.transport
+        )
 
+        if self.cfg.transport == "websockets":
+            self.client.ws_set_options(path=self.cfg.ws_path)
 
         topic_upstream = f"{self.cfg.topic}/upstream"
         topic_downstream = f"{self.cfg.topic}/downstream"
@@ -56,6 +63,9 @@ class MqttCarrier(BaseCarrier):
 
         if self.cfg.username is not None:
             self.client.username_pw_set(self.cfg.username, self.cfg.password)
+        if self.cfg.tls_allow_insecure:
+            logger.warning("[MQTT] Allowing TLS connections without verifying the server name matches the certificate label.")
+            self.client.tls_insecure_set(True)
         if self.cfg.ca_certs:
             self.client.tls_set(
                 ca_certs=self.cfg.ca_certs,
