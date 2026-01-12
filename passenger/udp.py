@@ -4,7 +4,6 @@ import threading
 from dataclasses import dataclass
 from .base_passenger import BasePassenger
 from carrier.base_carrier import BaseCarrier
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +31,9 @@ class UdpPassenger(BasePassenger):
        self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
        if(self.cfg.role == 'local'):
          self.socket.bind( (self.cfg.listen_ip, self.cfg.listen_port) )
-       print(f"[UDP Server] Listening on {self.cfg.listen_ip}:{self.cfg.listen_port}")
+       logger.info(f"[UDP Server] Waiting for data on {self.cfg.listen_ip}:{self.cfg.listen_port}...")
     except Exception as e:
-       print(f"[UDP Server] Error: {e}")
+       logger.info(f"[UDP] Error: {e}")
 
   
   def handle_incoming_data(self, msg):
@@ -44,9 +43,6 @@ class UdpPassenger(BasePassenger):
         logger.debug(f"[{self.cfg.role}] MQTT->TCP {len(data)} bytes: {data[:64].hex()}")
         self.socket.sendto(msg, self.addr)
      elif self.cfg.role == 'remote':
-       # REMOVE AFTER
-       #print("on_message remote"                                           )
-       print(f"{datetime.now().strftime('%H:%M:%S.%f')[:-3]} - msg from mqtt Forwarding to {self.cfg.dst_ip}:{self.cfg.dst_port}")
        self.socket.sendto(msg, (self.cfg.dst_ip, self.cfg.dst_port) )
 
   # only used by Remote role
@@ -57,11 +53,6 @@ class UdpPassenger(BasePassenger):
       if(self.addr == None):
         logger.info(f"[UDP Server] data received from {addr}")
       self.addr = addr
-
-
-      # print(f"Recevied on listen: {data} of type: {type(data)}")
-      # forward traffic to mqtt
-      print(f"{datetime.now().strftime('%H:%M:%S.%f')[:-3]} - udp from {addr} sending to mqtt")
       self.carrier.send(data)
 
   def _handle_local_incoming(self):
@@ -76,7 +67,6 @@ class UdpPassenger(BasePassenger):
        threading.Thread(target=self._run_listen, daemon=True).start()
      elif self.cfg.role == 'remote':
        threading.Thread(target=self._handle_local_incoming, daemon=True).start()
-       print(f"[UDP Client] Ready. Waiting for incoming data to connect to {self.cfg.listen_ip}:{self.cfg.dst_port}...")
 
 
   def run(self):
