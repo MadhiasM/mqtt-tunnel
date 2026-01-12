@@ -191,7 +191,7 @@ Address = 10.0.0.1/24
 ListenPort = 51820  
 
 [Peer]
-PublicKey = PRIVATE_KEY_PEER_B
+PublicKey = PUBLIC_KEY_PEER_B
 AllowedIPs = 10.0.0.2/32
 Endpoint = 127.0.0.1:5000  
 PersistentKeepalive = 25
@@ -206,7 +206,7 @@ PrivateKey = PRIVATE_KEY_PEER_A
 Address = 10.0.0.2/24  
   
 [Peer]  
-PublicKey = Jm7NvQnob2ZW4ViAiVCgbQue2F0p5K1uLui4ee19tQs=  
+PublicKey = PUBLIC_KEY_PEER_B
 AllowedIPs = 10.0.0.0/24  
 Endpoint = 127.0.0.1:8000  
 PersistentKeepalive = 25
