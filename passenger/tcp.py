@@ -122,7 +122,6 @@ class TcpPassenger(BasePassenger):
             sock = self._create_socket()
             sock.connect((self.cfg.dst_ip, self.cfg.dst_port))
             self.data_socket = sock
-            # Start reading thread
             threading.Thread(target=self._read_loop, daemon=True).start()
         except Exception as e:
             logger.info(f"[TCP Client] Connection failed: {e}")
@@ -142,10 +141,9 @@ class TcpPassenger(BasePassenger):
             while self.running and self.data_socket:
                 data = self.data_socket.recv(self.cfg.buffer_size)
                 if not data:
-                    break # Connection closed by peer.
+                    break
 
                 logger.debug(f"[{self.cfg.role}] TCP->MQTT {len(data)} bytes: {data[:64].hex()}")
-                # Send data that was received from TCP socket to carrier
                 self.carrier.send(data)
 
         except Exception as e:
