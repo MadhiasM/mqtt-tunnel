@@ -86,6 +86,9 @@ python3 main.py --role remote --mqtt-host broker.example.com \
 | `--mqtt-qos` | `0` | MQTT QoS level (0, 1, or 2) |
 | `--mqtt-keep-alive-time` | `60` | Keep alive time in seconds |
 | `--mqtt-topic` | `tunnel` | Base topic for the tunnel |
+| `--mqtt-transport` | `tcp` | Transport (tcp or websockets) |
+| `--mqtt-ws-path` | `/mqtt` | MQTT WebSocket path |
+| `--mqtt-tls-allow-insecure` | `False` | Disable TLS certificate verification |
 
 ### Tunnel Options
 
