@@ -28,6 +28,7 @@ class MqttConfig:
     ca_certs: Optional[str] = None
     certfile: Optional[str] = None
     keyfile: Optional[str] = None
+    max_message_size: int = 268435456
 
 class MqttCarrier(BaseCarrier):
     def __init__(self, config: MqttConfig):
@@ -100,7 +101,14 @@ class MqttCarrier(BaseCarrier):
         """
         Public method to send the passenger data to the broker
         """
-        self.client.publish(self.topic_pub, payload, self.cfg.qos)
+        if len(payload) > self.cfg.max_message_size:
+            payload_list = []
+            for i in range(0, len(payload), self.cfg.max_message_size):
+                payload_list.append(payload[i: i+ self.cfg.max_message_size])
+            for sub_payload in payload_list:
+                self.client.publish(self.topic_pub, sub_payload, self.cfg.qos)
+        else:
+            self.client.publish(self.topic_pub, payload, self.cfg.qos)
 
     def _on_connect(self, client, userdata, flags, reason_code, properties):
         """

@@ -3,3 +3,13 @@ config.json
 config.wan.json
 config.lan.json
 __pycache__
+test.py
+udp_auto_response.py
+udp_listen.py
+udp_send_over_mqtt.py
+tcp_listen.py
+udp_send.py
+.gitignore
+rcv_mqtt_send_to_udp.py
+udp_auto_repsonse.py
+ignore_readme.me

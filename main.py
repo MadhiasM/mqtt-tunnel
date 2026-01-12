@@ -25,6 +25,7 @@ def parse_args():
     parser.add_argument("--mqtt-transport", choices=["tcp", "websockets"], default="tcp", help="Transport mechanism (default: tcp)")
     parser.add_argument("--mqtt-ws-path", default="/mqtt", help="MQTT WebSocket path (default: /mqtt")
     parser.add_argument("--mqtt-tls-allow-insecure", default=False, help="Allow TLS connections without verifying the server name matches the certificate label.")
+    parser.add_argument("--mqtt-max-msg-size", default=268435456, type=int, help="Base topic for the tunnel (default: 'tunnel'). Will append /upstream and /downstream.")
 
     # TCP Config
     parser.add_argument("--listen-port", type=int, required=False, help="Local Listen Port")
@@ -32,7 +33,7 @@ def parse_args():
     # UDP Config
     parser.add_argument("--listen-ip", type=str, default='0.0.0.0', help="UDP Listen IP")
     parser.add_argument("--dst-ip", type=str, default='127.0.0.1', help="Destination IP")
-    parser.add_argument("--dst-port", type=int, required=False, help="Destination Port")
+    parser.add_argument("--dst-port", type=int, default=22, required=False, help="Destination Port")
     parser.add_argument("--buffer-size", default=65536, type=int, help="Buffer size of the TCP socket")
 
     return parser.parse_args()
@@ -63,6 +64,7 @@ def main():
         qos=args.mqtt_qos,
         keep_alive_time=args.mqtt_keep_alive_time,
         topic=args.mqtt_topic,
+        max_message_size=args.mqtt_max_msg_size,
         transport=args.mqtt_transport,
         ws_path=args.mqtt_ws_path,
         tls_allow_insecure= args.mqtt_tls_allow_insecure
