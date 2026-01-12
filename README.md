@@ -4,6 +4,8 @@ A TCP/UDP tunnel, which uses MQTT.
 
 Allowing you to expose services through an MQTT broker. Perfect for scenarios where direct connections aren't possible but both endpoints can reach an MQTT broker.
 
+In combination with SSH/Wireguard it is possible to tunnel a full VPN.
+
 ## Features
 
 - Bidirectional tunneling of TCP or UDP traffic over MQTT
@@ -35,12 +37,14 @@ pip install paho-mqtt
 
 **Local side** (listens on port 8000):
 ```bash
-python3 main.py --role local --mqtt-host broker.example.com --listen-port 8000
+python3 main.py --role local --mqtt-host broker.example.com \
+  --listen-port 8000
 ```
 
 **Remote side** (forwards to localhost:22):
 ```bash
-python3 main.py --role remote --mqtt-host broker.example.com --dst-ip 127.0.0.1 --dst-port 22
+python3 main.py --role remote --mqtt-host broker.example.com \
+  --dst-ip 127.0.0.1 --dst-port 22
 ```
 For udp just add `-u` flag.
 
@@ -65,7 +69,7 @@ For udp just add `-u` flag.
 - `--listen-port` - Port to listen on (local role)
 - `--listen-ip` - IP address to listen on (default: 0.0.0.0)
 - `--dst-ip` - Destination IP address (remote role; default: 127.0.0.1)
-- `--dst-port` - Destination port (remote role)
+- `--dst-port` - Destination port (remote role; default: 22)
 - `--buffer-size` - Socket buffer size in bytes (default: 65536)
 
 ## Examples
@@ -86,4 +90,94 @@ python3 main.py --role remote --mqtt-host mqtt.example.com --dst-port 22
 Connect to SSH:
 ```bash
 ssh -p 2222 user@localhost
+
 ```
+### VPN, Full IP Tunnel using SSH
+
+#### Prepare SSH Server
+```bash
+sudo ip tuntap add dev tun0 mode tun
+sudo ip addr add 10.0.0.1/24 dev tun0
+sudo ip link set up dev tun0
+sudo sysctl -w net.ipv4.ip_forward=1
+sudo iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o eth0 -j MASQUERADE
+```
+Start MQTT-Tunnel (Server-Side):
+
+`python3 main.py --role remote --mqtt-host mqtt.example.com`
+#### Prepare SSH Client
+```bash
+sudo ip tuntap add dev tun0 mode tun
+sudo ip link set tun0 up
+sudo ip addr add 10.0.0.2/24 dev tun0
+sudo ip route add default via 10.0.0.1
+```
+
+Setup route to MQTT Server. Necessary if MQTT Server is not in local subnet.
+
+```bash
+sudo ip route add IP_of_MQTT_server/32 dev YOUR_NETWORK_DEVICE
+sudo ip route add default via 10.0.0.1 dev tun0
+```
+
+
+Sart MQTT-Tunnel (Client-Side):
+
+`python3 main.py --mqtt-host IP_of_MQTT_server --role local --listen-port 8000`
+
+Connect via SSH with:
+
+`ssh -p 8000 -w 0:0 user@localhost`
+
+### VPN, using Wireguard 
+#### Config file peerA (server) 
+**`/etc/wireguard/wgA.conf`**
+```
+[Interface]
+PrivateKey = PRIVATE_KEY_PEER_A
+Address = 10.0.0.1/24
+ListenPort = 51820  
+
+[Peer]
+PublicKey = PRIVATE_KEY_PEER_B
+AllowedIPs = 10.0.0.2/32
+Endpoint = 127.0.0.1:5000  
+PersistentKeepalive = 25
+```
+#### Config file peerB (client)
+**`/etc/wireguard/wgB.conf`**
+```
+[Interface]  
+PrivateKey = PRIVATE_KEY_PEER_A
+Address = 10.0.0.2/24  
+  
+[Peer]  
+PublicKey = Jm7NvQnob2ZW4ViAiVCgbQue2F0p5K1uLui4ee19tQs=  
+AllowedIPs = 10.0.0.0/24  
+Endpoint = 127.0.0.1:8000  
+PersistentKeepalive = 25
+```
+#### PeerA: setup ip forwarding and iptables
+```
+sudo sysctl -w net.ipv4.ip_forward=1
+
+sudo iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o enp0s3 -j MASQUERADE
+sudo iptables -A FORWARD -i wg0 -j ACCEPT
+sudo iptables -A FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -I FORWARD 1 -i wg0 -o enp0s3 -j ACCEPT
+sudo iptables -I FORWARD 2 -i enp0s3 -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+
+sudo wg-quick up wgA
+```
+Start MQTT-Tunnel with:
+
+`python3 main.py -u --mqtt-host mqtt.example.com --role remote --udp-send-port 51820`
+#### PeerB: add explicit route to mqtt Server
+
+`sudo ip route add IP_of_MQTT_server/32 dev YOUR_NETWORK_DEVICE`
+
+Start Wireguard:
+
+`sudo wg-quick up wgB`
+
+Wireguard sets up the routing.
