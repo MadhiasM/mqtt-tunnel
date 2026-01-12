@@ -22,6 +22,9 @@ def parse_args():
     parser.add_argument("--mqtt-qos", choices=[0, 1, 2], default=0, type=int, help="MQTT QoS")
     parser.add_argument("--mqtt-keep-alive-time", default=60, type=int, help="MQTT Keep Alive Time")
     parser.add_argument("--mqtt-topic", default="tunnel", type=str, help="Base topic for the tunnel (default: 'tunnel'). Will append /upstream and /downstream.")
+    parser.add_argument("--mqtt-transport", choices=["tcp", "websockets"], default="tcp", help="Transport mechanism (default: tcp)")
+    parser.add_argument("--mqtt-ws-path", default="/mqtt", help="MQTT WebSocket path (default: /mqtt")
+    parser.add_argument("--mqtt-tls-allow-insecure", default=False, help="Allow TLS connections without verifying the server name matches the certificate label.")
 
     # TCP Config
     parser.add_argument("--listen-port", type=int, required=False, help="Local Listen Port")
@@ -59,8 +62,12 @@ def main():
         ca_certs=args.mqtt_ca_cert,
         qos=args.mqtt_qos,
         keep_alive_time=args.mqtt_keep_alive_time,
-        topic=args.mqtt_topic
+        topic=args.mqtt_topic,
+        transport=args.mqtt_transport,
+        ws_path=args.mqtt_ws_path,
+        tls_allow_insecure= args.mqtt_tls_allow_insecure
     )
+
     tcp_conf = TcpPassengerConfig(
         role=args.role,
         listen_ip = args.listen_ip,
