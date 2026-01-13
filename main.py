@@ -11,7 +11,7 @@ def parse_args():
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose/debug logging")
     parser.add_argument("--role", required=True, choices=['local', 'remote'], help="Role of this tunnel end")
     parser.add_argument("-u", action='store_true', help="Use UDP instead of TCP")
-    
+
 
     # MQTT Config
     parser.add_argument("--mqtt-host", required=True, help="MQTT Broker Host")
@@ -22,19 +22,17 @@ def parse_args():
     parser.add_argument("--mqtt-qos", choices=[0, 1, 2], default=0, type=int, help="MQTT QoS")
     parser.add_argument("--mqtt-keep-alive-time", default=60, type=int, help="MQTT Keep Alive Time")
     parser.add_argument("--mqtt-topic", default="tunnel", type=str, help="Base topic for the tunnel (default: 'tunnel'). Will append /upstream and /downstream.")
-    parser.add_argument("--mqtt-transport", choices=["tcp", "websockets"], default="tcp", help="Transport mechanism (default: tcp)")
+    parser.add_argument("--mqtt-transport", choices=["tcp", "websockets"], default="tcp", help="Transport: tcp (default) or websockets")
     parser.add_argument("--mqtt-ws-path", default="/mqtt", help="MQTT WebSocket path (default: /mqtt")
     parser.add_argument("--mqtt-tls-allow-insecure", default=False, help="Allow TLS connections without verifying the server name matches the certificate label.")
-    parser.add_argument("--mqtt-max-msg-size", default=268435456, type=int, help="Base topic for the tunnel (default: 'tunnel'). Will append /upstream and /downstream.")
+    parser.add_argument("--mqtt-max-msg-size", default=268435456, type=int, help="Maximum MQTT payload size in bytes")
 
-    # TCP Config
+    # TCP/UDP Config
     parser.add_argument("--listen-port", type=int, required=False, help="Local Listen Port")
-
-    # UDP Config
-    parser.add_argument("--listen-ip", type=str, default='0.0.0.0', help="UDP Listen IP")
+    parser.add_argument("--listen-ip", type=str, default='0.0.0.0', help="Listen IP")
     parser.add_argument("--dst-ip", type=str, default='127.0.0.1', help="Destination IP")
     parser.add_argument("--dst-port", type=int, default=22, required=False, help="Destination Port")
-    parser.add_argument("--buffer-size", default=65536, type=int, help="Buffer size of the TCP socket")
+    parser.add_argument("--buffer-size", default=65536, type=int, help="Socket buffer size")
 
     return parser.parse_args()
 
