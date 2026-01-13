@@ -36,14 +36,14 @@ class UdpPassenger(BasePassenger):
        logger.info(f"[UDP] Error: {e}")
 
   
-  def handle_incoming_data(self, msg):
+  def handle_incoming_data(self, data):
      if self.cfg.role == 'local':
        # in case we get something before we have self.addr
        if self.addr:
         logger.debug(f"[{self.cfg.role}] MQTT->TCP {len(data)} bytes: {data[:64].hex()}")
-        self.socket.sendto(msg, self.addr)
+        self.socket.sendto(data, self.addr)
      elif self.cfg.role == 'remote':
-       self.socket.sendto(msg, (self.cfg.dst_ip, self.cfg.dst_port) )
+       self.socket.sendto(data, (self.cfg.dst_ip, self.cfg.dst_port) )
 
   # only used by Remote role
   def _run_listen(self):
@@ -78,7 +78,7 @@ class UdpPassenger(BasePassenger):
       threading.Event().wait()
     except KeyboardInterrupt:
       print()
-      logger.info("[TCP] Stopping via Keyboard Interrupt...")
+      logger.info("[UDP] Stopping via Keyboard Interrupt...")
     finally:
       self.stop()
 
