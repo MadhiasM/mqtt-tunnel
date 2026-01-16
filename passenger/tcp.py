@@ -90,7 +90,7 @@ class TcpPassenger(BasePassenger):
         Create server and wait for inbound connections
         """
         self.server_socket = self._create_socket()
-        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # Auto-reconnect if old socket is not yet cleared by OS, only required for Server
+        self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # Auto-reconnect if old socket is not yet cleared by OS
 
         try:
             self.server_socket.bind((self.cfg.listen_ip, self.cfg.listen_port))
@@ -98,7 +98,7 @@ class TcpPassenger(BasePassenger):
             logger.info(f"[TCP Server] Waiting for connections on {self.cfg.listen_ip}:{self.cfg.listen_port}...")
 
             while self.running:
-                # Hier warten wir auf den Client (blockierend)
+                # Blocking wait for client
                 client_sock, addr = self.server_socket.accept()
                 logger.info(f"[TCP Server] Accepted connection from {addr}")
 
