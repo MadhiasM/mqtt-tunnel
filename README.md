@@ -249,3 +249,31 @@ sudo wg-quick up wgB
 ```
 
 > Wireguard sets up the routing automatically.
+
+___
+
+### Forward a SOCKS proxy through an MQTT broker.
+
+Forward SSH connections through an MQTT broker.
+
+#### Setup
+
+**Local machine:**
+```bash
+python3 main.py --role local --mqtt-host mqtt.example.com --listen-port 2222
+```
+
+**Remote machine** (with SSH server on port 22):
+```bash
+python3 main.py --role remote --mqtt-host mqtt.example.com --dst-port 22
+```
+
+#### Connect
+
+```bash
+ssh -D 1234 mathias@localhost -p 2222 -v
+```
+
+#### Configure SOCKS Proxy in browser or system
+
+Configure SOCKS Proxy in system or browser: Host: `localhost` Port: `1234`
