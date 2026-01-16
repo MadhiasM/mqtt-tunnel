@@ -2,7 +2,7 @@
 
 > A TCP/UDP tunnel over MQTT for exposing services through an MQTT broker
 
-Perfect for scenarios where direct connections aren't possible but both endpoints can reach an MQTT broker. In combination with SSH/Wireguard it is possible to tunnel a full VPN.
+Perfect for scenarios where direct connections aren't possible but both endpoints can reach an MQTT broker. In combination with SSH/Wireguard it is possible to tunnel a full VPN. Does not support IPv6!
 
 ---
 
@@ -161,7 +161,7 @@ sudo ip route add default via 10.0.0.1
 Setup route to MQTT Server *(necessary if MQTT Server is not in local subnet)*:
 
 ```bash
-sudo ip route add IP_of_MQTT_server/32 dev YOUR_NETWORK_DEVICE
+sudo ip route add IP_of_MQTT_server/32 via GATEWAY_IP 
 sudo ip route add default via 10.0.0.1 dev tun0
 ```
 
@@ -175,6 +175,12 @@ python3 main.py --mqtt-host IP_of_MQTT_server --role local --listen-port 8000
 
 ```bash
 ssh -p 8000 -w 0:0 user@localhost
+```
+
+If you use IPv6 you may want to disable it to prevent leakage:
+
+```bash
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
 ```
 
 ---
@@ -219,11 +225,11 @@ Setup IP forwarding and iptables:
 ```bash
 sudo sysctl -w net.ipv4.ip_forward=1
 
-sudo iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o enp0s3 -j MASQUERADE
+sudo iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o YOUR_NETWORK_DEVICE -j MASQUERADE
 sudo iptables -A FORWARD -i wg0 -j ACCEPT
 sudo iptables -A FORWARD -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-sudo iptables -I FORWARD 1 -i wg0 -o enp0s3 -j ACCEPT
-sudo iptables -I FORWARD 2 -i enp0s3 -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -I FORWARD 1 -i wg0 -o YOUR_NETWORK_DEVICE -j ACCEPT
+sudo iptables -I FORWARD 2 -i YOUR_NETWORK_DEVICE -o wg0 -m state --state RELATED,ESTABLISHED -j ACCEPT
 
 sudo wg-quick up wgA
 ```
@@ -239,7 +245,7 @@ python3 main.py -u --mqtt-host mqtt.example.com --role remote --udp-send-port 51
 Add explicit route to MQTT Server:
 
 ```bash
-sudo ip route add IP_of_MQTT_server/32 dev YOUR_NETWORK_DEVICE
+sudo ip route add IP_of_MQTT_server/32 via GATEWAY_IP
 ```
 
 Start Wireguard:
@@ -248,6 +254,11 @@ Start Wireguard:
 sudo wg-quick up wgB
 ```
 
+If you use IPv6 you may want to disable it to prevent leakage:
+
+```bash
+sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
+```
 > Wireguard sets up the routing automatically.
 
 ___
@@ -271,7 +282,7 @@ python3 main.py --role remote --mqtt-host mqtt.example.com --dst-port 22
 #### Connect
 
 ```bash
-ssh -D 1234 mathias@localhost -p 2222 -v
+ssh -D 1234 user@localhost -p 2222 -v
 ```
 
 #### Configure SOCKS Proxy in browser or system

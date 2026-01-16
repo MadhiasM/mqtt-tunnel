@@ -40,7 +40,7 @@ class UdpPassenger(BasePassenger):
      if self.cfg.role == 'local':
        # in case we get something before we have self.addr
        if self.addr:
-        logger.debug(f"[{self.cfg.role}] MQTT->TCP {len(data)} bytes: {data[:64].hex()}")
+        logger.debug(f"[{self.cfg.role}] MQTT->UDP {len(data)} bytes: {data[:64].hex()}")
         self.socket.sendto(data, self.addr)
      elif self.cfg.role == 'remote':
        self.socket.sendto(data, (self.cfg.dst_ip, self.cfg.dst_port) )
@@ -52,13 +52,14 @@ class UdpPassenger(BasePassenger):
       data, addr = self.socket.recvfrom(self.cfg.buffer_size)
       if(self.addr == None):
         logger.info(f"[UDP Server] data received from {addr}")
+      logger.debug(f"[{self.cfg.role}] UDP->MQTT {len(data)} bytes: {data[:64].hex()}")
       self.addr = addr
       self.carrier.send(data)
 
   def _handle_local_incoming(self):
     while self.running:
       data, addr = self.socket.recvfrom(self.cfg.buffer_size)
-      logger.debug(f"[{self.cfg.role}] TCP->MQTT {len(data)} bytes: {data[:64].hex()}")
+      logger.debug(f"[{self.cfg.role}] UDP->MQTT {len(data)} bytes: {data[:64].hex()}")
       self.carrier.send(data)
 
   def start(self):
